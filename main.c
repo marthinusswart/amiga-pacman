@@ -11,6 +11,7 @@
 #include <graphics/gfxmacros.h>
 #include <hardware/custom.h>
 #include <hardware/dmabits.h>
+#include <ace/utils/custom.h>
 #include <hardware/intbits.h>
 #include "support/gcc8_c_support.h"
 #include "routines/ScreenRoutines.h"
@@ -40,33 +41,14 @@ struct View *ActiView;
 
 tBitMap *tScreenBuffer = NULL;
 tBitMap *tPacmanTiles = NULL;
+tBitMap *tBackground = NULL;
 
 // DEMO - INCBIN
 volatile short frameCounter = 0;
 INCBIN(colors, "pal/pacman_tiles.pal")
 INCBIN_CHIP(pacman_tiles, "bpl/pacman_tiles.bpl")
 INCBIN_CHIP(pacman_tiles_mask, "bpl/pacman_tiles_mask.bpl")
-
-// put copperlist into chip mem so we can use it without copying
-const UWORD copper2[] __attribute__((section(".MEMF_CHIP"))) = {
-	offsetof(struct Custom, color[0]), 0x0000,
-	0x4101, 0xff00, offsetof(struct Custom, color[0]), 0x0111, // line 0x41
-	0x4201, 0xff00, offsetof(struct Custom, color[0]), 0x0222, // line 0x42
-	0x4301, 0xff00, offsetof(struct Custom, color[0]), 0x0333, // line 0x43
-	0x4401, 0xff00, offsetof(struct Custom, color[0]), 0x0444, // line 0x44
-	0x4501, 0xff00, offsetof(struct Custom, color[0]), 0x0555, // line 0x45
-	0x4601, 0xff00, offsetof(struct Custom, color[0]), 0x0666, // line 0x46
-	0x4701, 0xff00, offsetof(struct Custom, color[0]), 0x0777, // line 0x47
-	0x4801, 0xff00, offsetof(struct Custom, color[0]), 0x0888, // line 0x48
-	0x4901, 0xff00, offsetof(struct Custom, color[0]), 0x0999, // line 0x49
-	0x4a01, 0xff00, offsetof(struct Custom, color[0]), 0x0aaa, // line 0x4a
-	0x4b01, 0xff00, offsetof(struct Custom, color[0]), 0x0bbb, // line 0x4b
-	0x4c01, 0xff00, offsetof(struct Custom, color[0]), 0x0ccc, // line 0x4c
-	0x4d01, 0xff00, offsetof(struct Custom, color[0]), 0x0ddd, // line 0x4d
-	0x4e01, 0xff00, offsetof(struct Custom, color[0]), 0x0eee, // line 0x4e
-	0x4f01, 0xff00, offsetof(struct Custom, color[0]), 0x0fff, // line 0x4e
-	0xffff, 0xfffe											   // end copper list
-};
+INCBIN_CHIP(pacman_stage_01, "bpl/stage-0001.bpl")
 
 static void vblankHandler(volatile struct Custom *pCustom, volatile void *pData)
 {
@@ -142,6 +124,8 @@ static void teardownEnvironment(void)
 		bitmapDestroy(tScreenBuffer);
 	if (tPacmanTiles)
 		FreeMem(tPacmanTiles, sizeof(tBitMap));
+	if (tBackground)
+		FreeMem(tBackground, sizeof(tBitMap));
 
 	systemDestroy();
 
@@ -192,6 +176,20 @@ static USHORT *setupCopper(void)
 		tPacmanTiles->Planes[p] = (PLANEPTR)(pacman_tiles + p * (320 / 8) * 320);
 	}
 
+	// 3. Wrap the background image data in a tBitMap
+	tBackground = (tBitMap *)AllocMem(sizeof(tBitMap), MEMF_PUBLIC | MEMF_CLEAR);
+	InitBitMap((struct BitMap *)tBackground, 5, 320, 256);
+	for (int p = 0; p < 5; p++)
+	{
+		tBackground->Planes[p] = (PLANEPTR)(pacman_stage_01 + p * (320 / 8) * 256);
+	}
+
+	// Copy the background into the screen buffer initially
+	for (int p = 0; p < 5; p++)
+	{
+		CopyMem(tBackground->Planes[p], tScreenBuffer->Planes[p], (320 / 8) * 256);
+	}
+
 	copPtr = screenScanDefault(copPtr);
 
 	// enable bitplanes
@@ -220,12 +218,11 @@ static USHORT *setupCopper(void)
 	for (int a = 0; a < 32; a++)
 		copPtr = copSetColor(copPtr, a, ((USHORT *)colors)[a]);
 
-	// jump to copper2
-	*copPtr++ = offsetof(struct Custom, copjmp2);
-	*copPtr++ = 0x7fff;
+	// end copper list
+	*copPtr++ = 0xffff;
+	*copPtr++ = 0xfffe;
 
 	custom->cop1lc = (ULONG)copper1;
-	custom->cop2lc = (ULONG)copper2;
 	custom->dmacon = DMAF_BLITTER; // disable blitter dma for copjmp bug
 	custom->copjmp1 = 0x7fff;	   // start coppper
 
@@ -291,12 +288,15 @@ int main()
 		Sprite *currentSprite = pacman->getSprite(pacman, pacman->direction);
 		if (currentSprite)
 		{
-			blitRect(tScreenBuffer, pacman->prevX, pacman->prevY, pacman->width, pacman->height, 0);
+			// Restore background at previous position instead of clearing to black
+			blitCopy(tBackground, pacman->prevX, pacman->prevY,
+					 tScreenBuffer, pacman->prevX, pacman->prevY,
+					 pacman->width, pacman->height, MINTERM_COOKIE);
 
 			blitCopyMask(
-				tPacmanTiles,
-				currentSprite->x, currentSprite->y, tScreenBuffer,
-				pacman->x, pacman->y, pacman->width, pacman->height,
+				tPacmanTiles, currentSprite->x, currentSprite->y,
+				tScreenBuffer, pacman->x, pacman->y,
+				pacman->width, pacman->height,
 				(const UBYTE *)pacman_tiles_mask);
 		}
 
