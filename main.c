@@ -21,6 +21,7 @@
 #include "routines/CopperRoutines.h"
 #include "routines/CollitionRoutines.h"
 #include "routines/PathfindingRoutines.h"
+#include "routines/SpriteRoutines.h"
 #include "player/pacman.h"
 #include "ghost/ghost.h"
 
@@ -34,6 +35,8 @@ struct GfxBase *GfxBase;
 Pacman *pacman;
 Ghost *blueGhost;
 Ghost *redGhost;
+Ghost *pinkGhost;
+Ghost *orangeGhost;
 
 // backup
 UWORD SystemInts;
@@ -44,7 +47,10 @@ APTR SystemIrq;
 
 struct View *ActiView;
 
-tBitMap *tScreenBuffer = NULL;
+tBitMap *tScreenBuffers[2] = {NULL, NULL};
+USHORT *bplPtrsInCopper = NULL;
+int frontBufferIdx = 0;
+int backBufferIdx = 1;
 tBitMap *tPacmanTiles = NULL;
 tBitMap *tBackground = NULL;
 
@@ -125,8 +131,10 @@ static void setupEnvironment(void)
 static void teardownEnvironment(void)
 {
 	KPrintF("Destroying System!\n");
-	if (tScreenBuffer)
-		bitmapDestroy(tScreenBuffer);
+	if (tScreenBuffers[0])
+		bitmapDestroy(tScreenBuffers[0]);
+	if (tScreenBuffers[1])
+		bitmapDestroy(tScreenBuffers[1]);
 	if (tPacmanTiles)
 		FreeMem(tPacmanTiles, sizeof(tBitMap));
 	if (tBackground)
@@ -170,8 +178,9 @@ static USHORT *setupCopper(void)
 	USHORT *copper1 = (USHORT *)AllocMem(1024, MEMF_CHIP);
 	USHORT *copPtr = copper1;
 
-	// 1. Create PLANAR screen buffer safely using ACE (BMF_DISPLAYABLE forces CHIP RAM)
-	tScreenBuffer = bitmapCreate(320, 256, 5, BMF_CLEAR | BMF_DISPLAYABLE);
+	// 1. Create PLANAR screen buffers safely using ACE (BMF_DISPLAYABLE forces CHIP RAM)
+	tScreenBuffers[0] = bitmapCreate(320, 256, 5, BMF_CLEAR | BMF_DISPLAYABLE);
+	tScreenBuffers[1] = bitmapCreate(320, 256, 5, BMF_CLEAR | BMF_DISPLAYABLE);
 
 	// 2. Wrap the INCBIN planar tile data directly in a tBitMap (no memory copy needed!)
 	tPacmanTiles = (tBitMap *)AllocMem(sizeof(tBitMap), MEMF_PUBLIC | MEMF_CLEAR);
@@ -192,7 +201,8 @@ static USHORT *setupCopper(void)
 	// Copy the background into the screen buffer initially
 	for (int p = 0; p < 5; p++)
 	{
-		CopyMem(tBackground->Planes[p], tScreenBuffer->Planes[p], (320 / 8) * 256);
+		CopyMem(tBackground->Planes[p], tScreenBuffers[0]->Planes[p], (320 / 8) * 256);
+		CopyMem(tBackground->Planes[p], tScreenBuffers[1]->Planes[p], (320 / 8) * 256);
 	}
 
 	copPtr = screenScanDefault(copPtr);
@@ -215,8 +225,9 @@ static USHORT *setupCopper(void)
 	const UBYTE *planes[5];
 	for (int a = 0; a < 5; a++)
 	{
-		planes[a] = tScreenBuffer->Planes[a];
+		planes[a] = tScreenBuffers[0]->Planes[a];
 	}
+	bplPtrsInCopper = copPtr;					 // Save this globally so we can update it in the main loop!
 	copPtr = copSetPlanes(0, copPtr, planes, 5); // INJECT pointers into copper list!
 
 	// set colors
@@ -232,69 +243,6 @@ static USHORT *setupCopper(void)
 	custom->copjmp1 = 0x7fff;	   // start coppper
 
 	return copper1;
-}
-
-static void setupPacman(void)
-{
-	int bobX = 0;
-	int bobY = 0;
-	KPrintF("Create Pacman!\n");
-	pacman = createPacman(208, 150, 16, 16);
-	pacman->setMap(pacman, mapping_stage_0001);
-	calculateSpriteLocation(3, 9, 16, 16, 320, 320, &bobX, &bobY);
-	KPrintF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
-	pacman->addSprite(pacman, RIGHT, bobX, bobY, 16, 16);
-	calculateSpriteLocation(3, 5, 16, 16, 320, 320, &bobX, &bobY);
-	KPrintF("Created DOWN sprite at (%ld, %ld)\n", bobX, bobY);
-	pacman->addSprite(pacman, DOWN, bobX, bobY, 16, 16);
-	calculateSpriteLocation(3, 7, 16, 16, 320, 320, &bobX, &bobY);
-	KPrintF("Created LEFT sprite at (%ld, %ld)\n", bobX, bobY);
-	pacman->addSprite(pacman, LEFT, bobX, bobY, 16, 16);
-	calculateSpriteLocation(3, 11, 16, 16, 320, 320, &bobX, &bobY);
-	KPrintF("Created UP sprite at (%ld, %ld)\n", bobX, bobY);
-	pacman->addSprite(pacman, UP, bobX, bobY, 16, 16);
-}
-
-static void setupBlueGhost(void)
-{
-	int bobX = 0;
-	int bobY = 0;
-	KPrintF("Create Ghost!\n");
-	blueGhost = createGhost(100, 100, 16, 16);
-	blueGhost->setMap(blueGhost, mapping_stage_0001);
-	calculateSpriteLocation(4, 1, 16, 16, 320, 320, &bobX, &bobY);
-	KPrintF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
-	blueGhost->addSprite(blueGhost, RIGHT, bobX, bobY, 16, 16);
-	calculateSpriteLocation(6, 1, 16, 16, 320, 320, &bobX, &bobY);
-	KPrintF("Created DOWN sprite at (%ld, %ld)\n", bobX, bobY);
-	blueGhost->addSprite(blueGhost, DOWN, bobX, bobY, 16, 16);
-	calculateSpriteLocation(5, 1, 16, 16, 320, 320, &bobX, &bobY);
-	KPrintF("Created LEFT sprite at (%ld, %ld)\n", bobX, bobY);
-	blueGhost->addSprite(blueGhost, LEFT, bobX, bobY, 16, 16);
-	calculateSpriteLocation(7, 1, 16, 16, 320, 320, &bobX, &bobY);
-	KPrintF("Created UP sprite at (%ld, %ld)\n", bobX, bobY);
-	blueGhost->addSprite(blueGhost, UP, bobX, bobY, 16, 16);
-}
-
-static void setupRedGhost(void)
-{
-	int bobX = 0;
-	int bobY = 0;
-	KPrintF("Create Ghost!\n");
-	redGhost = createGhost(96, 112, 16, 16);
-	redGhost->setMap(redGhost, mapping_stage_0001);
-	calculateSpriteLocation(4, 7, 16, 16, 320, 320, &bobX, &bobY);
-	KPrintF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
-	redGhost->addSprite(redGhost, RIGHT, bobX, bobY, 16, 16);
-	calculateSpriteLocation(6, 7, 16, 16, 320, 320, &bobX, &bobY);
-	KPrintF("Created DOWN sprite at (%ld, %ld)\n", bobX, bobY);
-	redGhost->addSprite(redGhost, DOWN, bobX, bobY, 16, 16);
-	calculateSpriteLocation(5, 7, 16, 16, 320, 320, &bobX, &bobY);
-	KPrintF("Created LEFT sprite at (%ld, %ld)\n", bobX, bobY);
-	redGhost->addSprite(redGhost, LEFT, bobX, bobY, 16, 16);
-	calculateSpriteLocation(7, 7, 16, 16, 320, 320, &bobX, &bobY);
-	KPrintF("Created UP sprite at (%ld, %ld)\n", bobX, bobY);
-	redGhost->addSprite(redGhost, UP, bobX, bobY, 16, 16);
 }
 
 int main()
@@ -313,12 +261,27 @@ int main()
 	setupPacman();
 	setupBlueGhost();
 	setupRedGhost();
+	setupPinkGhost();
+	setupOrangeGhost();
+
+	// Double buffering history trackers. Array index 0 tracks Buffer 0, index 1 tracks Buffer 1.
+	int blueLastX[2] = {blueGhost->x, blueGhost->x};
+	int blueLastY[2] = {blueGhost->y, blueGhost->y};
+	int redLastX[2] = {redGhost->x, redGhost->x};
+	int redLastY[2] = {redGhost->y, redGhost->y};
+	int pinkLastX[2] = {pinkGhost->x, pinkGhost->x};
+	int pinkLastY[2] = {pinkGhost->y, pinkGhost->y};
+	int orangeLastX[2] = {orangeGhost->x, orangeGhost->x};
+	int orangeLastY[2] = {orangeGhost->y, orangeGhost->y};
+	int pacmanLastX[2] = {pacman->x, pacman->x};
+	int pacmanLastY[2] = {pacman->y, pacman->y};
 
 	systemSetDmaMask(DMAF_MASTER | DMAF_RASTER | DMAF_COPPER | DMAF_BLITTER, 1); // Tell ACE to enable DMA
 
 	// DEMO
 	systemSetInt(INTB_VERTB, vblankHandler, 0);
 	keyCreate();
+	BOOL gameIsRunning = FALSE;
 
 	while (!MouseLeft())
 	{
@@ -333,65 +296,127 @@ int main()
 			pacman->movePacman(pacman, UP);
 		else if (keyCheck(KEY_DOWN) || keyCheck(KEY_S))
 			pacman->movePacman(pacman, DOWN);
+		else if (keyCheck(KEY_SPACE))
+			gameIsRunning = TRUE;
 
-		// update red ghost pathfinding and move it
-		updateGhostDirection(redGhost, pacman);
-		redGhost->moveGhost(redGhost, redGhost->direction);
-
-		// 2. Wait for the vertical blanking interval AFTER logic is done.
-		// This gives the Blitter a head-start before the beam reaches the top!
-		WaitVbl();
-
-		// Draw blue ghost
-		Sprite *currentSprite = blueGhost->getSprite(blueGhost, blueGhost->direction);
-		if (currentSprite)
+		if (gameIsRunning)
 		{
-			// Restore background at previous position instead of clearing to black
-			blitCopy(tBackground, blueGhost->prevX, blueGhost->prevY,
-					 tScreenBuffer, blueGhost->prevX, blueGhost->prevY,
-					 blueGhost->width, blueGhost->height, MINTERM_COOKIE);
+			// update red ghost pathfinding and move it
+			updateChaseGhostDirection(redGhost, pacman);
+			redGhost->moveGhost(redGhost, redGhost->direction);
 
+			// update blue ghost pathfinding and move it
+			updateUnpredictableGhostDirection(blueGhost, pacman, redGhost);
+			blueGhost->moveGhost(blueGhost, blueGhost->direction);
+
+			// update pink ghost pathfinding and move it
+			updateAmbushGhostDirection(pinkGhost, pacman);
+			pinkGhost->moveGhost(pinkGhost, pinkGhost->direction);
+
+			// update orange ghost pathfinding and move it
+			updateCowardGhostDirection(orangeGhost, pacman);
+			orangeGhost->moveGhost(orangeGhost, orangeGhost->direction);
+		}
+
+		// ==========================================
+		// CLEAR PHASE: Restore backgrounds for ALL objects
+		// ==========================================
+		blitCopy(tBackground, blueLastX[backBufferIdx], blueLastY[backBufferIdx],
+				 tScreenBuffers[backBufferIdx], blueLastX[backBufferIdx], blueLastY[backBufferIdx],
+				 blueGhost->width, blueGhost->height, MINTERM_COOKIE);
+
+		blitCopy(tBackground, redLastX[backBufferIdx], redLastY[backBufferIdx],
+				 tScreenBuffers[backBufferIdx], redLastX[backBufferIdx], redLastY[backBufferIdx],
+				 redGhost->width, redGhost->height, MINTERM_COOKIE);
+
+		blitCopy(tBackground, pinkLastX[backBufferIdx], pinkLastY[backBufferIdx],
+				 tScreenBuffers[backBufferIdx], pinkLastX[backBufferIdx], pinkLastY[backBufferIdx],
+				 pinkGhost->width, pinkGhost->height, MINTERM_COOKIE);
+
+		blitCopy(tBackground, orangeLastX[backBufferIdx], orangeLastY[backBufferIdx],
+				 tScreenBuffers[backBufferIdx], orangeLastX[backBufferIdx], orangeLastY[backBufferIdx],
+				 orangeGhost->width, orangeGhost->height, MINTERM_COOKIE);
+
+		blitCopy(tBackground, pacmanLastX[backBufferIdx], pacmanLastY[backBufferIdx],
+				 tScreenBuffers[backBufferIdx], pacmanLastX[backBufferIdx], pacmanLastY[backBufferIdx],
+				 pacman->width, pacman->height, MINTERM_COOKIE);
+
+		Sprite *blueSprite = blueGhost->getSprite(blueGhost, blueGhost->direction);
+		Sprite *redSprite = redGhost->getSprite(redGhost, redGhost->direction);
+		Sprite *pinkSprite = pinkGhost->getSprite(pinkGhost, pinkGhost->direction);
+		Sprite *orangeSprite = orangeGhost->getSprite(orangeGhost, orangeGhost->direction);
+		Sprite *pacSprite = pacman->getSprite(pacman, pacman->direction);
+
+		// ==========================================
+		// DRAW PHASE: Draw ALL objects on the screen
+		// ==========================================
+		// Save the locations we are about to draw to, so we can erase them next time this buffer is active
+		blueLastX[backBufferIdx] = blueGhost->x;
+		blueLastY[backBufferIdx] = blueGhost->y;
+		redLastX[backBufferIdx] = redGhost->x;
+		redLastY[backBufferIdx] = redGhost->y;
+		pinkLastX[backBufferIdx] = pinkGhost->x;
+		pinkLastY[backBufferIdx] = pinkGhost->y;
+		orangeLastX[backBufferIdx] = orangeGhost->x;
+		orangeLastY[backBufferIdx] = orangeGhost->y;
+		pacmanLastX[backBufferIdx] = pacman->x;
+		pacmanLastY[backBufferIdx] = pacman->y;
+
+		if (blueSprite)
 			blitCopyMask(
-				tPacmanTiles, currentSprite->x, currentSprite->y,
-				tScreenBuffer, blueGhost->x, blueGhost->y,
+				tPacmanTiles, blueSprite->x, blueSprite->y,
+				tScreenBuffers[backBufferIdx], blueGhost->x, blueGhost->y,
 				blueGhost->width, blueGhost->height,
 				(const UBYTE *)pacman_tiles_mask);
-		}
 
-		// draw red ghost
-		currentSprite = redGhost->getSprite(redGhost, redGhost->direction);
-		if (currentSprite)
-		{
-			// Restore background at previous position instead of clearing to black
-			blitCopy(tBackground, redGhost->prevX, redGhost->prevY,
-					 tScreenBuffer, redGhost->prevX, redGhost->prevY,
-					 redGhost->width, redGhost->height, MINTERM_COOKIE);
-
+		if (redSprite)
 			blitCopyMask(
-				tPacmanTiles, currentSprite->x, currentSprite->y,
-				tScreenBuffer, redGhost->x, redGhost->y,
+				tPacmanTiles, redSprite->x, redSprite->y,
+				tScreenBuffers[backBufferIdx], redGhost->x, redGhost->y,
 				redGhost->width, redGhost->height,
 				(const UBYTE *)pacman_tiles_mask);
-		}
 
-		// draw pacman
-		currentSprite = pacman->getSprite(pacman, pacman->direction);
-		if (currentSprite)
-		{
-			// Restore background at previous position instead of clearing to black
-			blitCopy(tBackground, pacman->prevX, pacman->prevY,
-					 tScreenBuffer, pacman->prevX, pacman->prevY,
-					 pacman->width, pacman->height, MINTERM_COOKIE);
-
+		if (pinkSprite)
 			blitCopyMask(
-				tPacmanTiles, currentSprite->x, currentSprite->y,
-				tScreenBuffer, pacman->x, pacman->y,
+				tPacmanTiles, pinkSprite->x, pinkSprite->y,
+				tScreenBuffers[backBufferIdx], pinkGhost->x, pinkGhost->y,
+				pinkGhost->width, pinkGhost->height,
+				(const UBYTE *)pacman_tiles_mask);
+
+		if (orangeSprite)
+			blitCopyMask(
+				tPacmanTiles, orangeSprite->x, orangeSprite->y,
+				tScreenBuffers[backBufferIdx], orangeGhost->x, orangeGhost->y,
+				orangeGhost->width, orangeGhost->height,
+				(const UBYTE *)pacman_tiles_mask);
+
+		if (pacSprite)
+			blitCopyMask(
+				tPacmanTiles, pacSprite->x, pacSprite->y,
+				tScreenBuffers[backBufferIdx], pacman->x, pacman->y,
 				pacman->width, pacman->height,
 				(const UBYTE *)pacman_tiles_mask);
+
+		// ==========================================
+		// SWAP PHASE: Wait for VBlank, then swap buffers
+		// ==========================================
+		WaitVbl();
+
+		const UBYTE *planes[5];
+		for (int a = 0; a < 5; a++)
+		{
+			planes[a] = tScreenBuffers[backBufferIdx]->Planes[a];
 		}
+		// Safely swap the bitplane pointers in the copper list
+		copSetPlanes(0, bplPtrsInCopper, planes, 5);
+
+		// Flip buffers for the next frame
+		frontBufferIdx = backBufferIdx;
+		backBufferIdx = 1 - frontBufferIdx;
 
 		keyProcess(); // Process pending keystrokes from the CIA interrupt buffer
 	}
+
 	KPrintF("Exit Loop!\n");
 	keyDestroy();
 
