@@ -19,7 +19,9 @@
 #include "routines/MouseRoutines.h"
 #include "routines/MusicRoutines.h"
 #include "routines/CopperRoutines.h"
+#include "routines/CollitionRoutines.h"
 #include "player/pacman.h"
+#include "ghost/ghost.h"
 
 // config
 #define MUSIC
@@ -29,6 +31,8 @@ volatile struct Custom *custom;
 struct DosLibrary *DOSBase;
 struct GfxBase *GfxBase;
 Pacman *pacman;
+Ghost *blueGhost;
+Ghost *redGhost;
 
 // backup
 UWORD SystemInts;
@@ -235,6 +239,7 @@ static void setupPacman(void)
 	int bobY = 0;
 	KPrintF("Create Pacman!\n");
 	pacman = createPacman(208, 150, 16, 16);
+	pacman->setMap(pacman, mapping_stage_0001);
 	calculateSpriteLocation(3, 9, 16, 16, 320, 320, &bobX, &bobY);
 	KPrintF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
 	pacman->addSprite(pacman, RIGHT, bobX, bobY, 16, 16);
@@ -247,6 +252,48 @@ static void setupPacman(void)
 	calculateSpriteLocation(3, 11, 16, 16, 320, 320, &bobX, &bobY);
 	KPrintF("Created UP sprite at (%ld, %ld)\n", bobX, bobY);
 	pacman->addSprite(pacman, UP, bobX, bobY, 16, 16);
+}
+
+static void setupBlueGhost(void)
+{
+	int bobX = 0;
+	int bobY = 0;
+	KPrintF("Create Ghost!\n");
+	blueGhost = createGhost(100, 100, 16, 16);
+	blueGhost->setMap(blueGhost, mapping_stage_0001);
+	calculateSpriteLocation(4, 1, 16, 16, 320, 320, &bobX, &bobY);
+	KPrintF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
+	blueGhost->addSprite(blueGhost, RIGHT, bobX, bobY, 16, 16);
+	calculateSpriteLocation(6, 1, 16, 16, 320, 320, &bobX, &bobY);
+	KPrintF("Created DOWN sprite at (%ld, %ld)\n", bobX, bobY);
+	blueGhost->addSprite(blueGhost, DOWN, bobX, bobY, 16, 16);
+	calculateSpriteLocation(5, 1, 16, 16, 320, 320, &bobX, &bobY);
+	KPrintF("Created LEFT sprite at (%ld, %ld)\n", bobX, bobY);
+	blueGhost->addSprite(blueGhost, LEFT, bobX, bobY, 16, 16);
+	calculateSpriteLocation(7, 1, 16, 16, 320, 320, &bobX, &bobY);
+	KPrintF("Created UP sprite at (%ld, %ld)\n", bobX, bobY);
+	blueGhost->addSprite(blueGhost, UP, bobX, bobY, 16, 16);
+}
+
+static void setupRedGhost(void)
+{
+	int bobX = 0;
+	int bobY = 0;
+	KPrintF("Create Ghost!\n");
+	redGhost = createGhost(100, 116, 16, 16);
+	redGhost->setMap(redGhost, mapping_stage_0001);
+	calculateSpriteLocation(4, 7, 16, 16, 320, 320, &bobX, &bobY);
+	KPrintF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
+	redGhost->addSprite(redGhost, RIGHT, bobX, bobY, 16, 16);
+	calculateSpriteLocation(6, 7, 16, 16, 320, 320, &bobX, &bobY);
+	KPrintF("Created DOWN sprite at (%ld, %ld)\n", bobX, bobY);
+	redGhost->addSprite(redGhost, DOWN, bobX, bobY, 16, 16);
+	calculateSpriteLocation(5, 7, 16, 16, 320, 320, &bobX, &bobY);
+	KPrintF("Created LEFT sprite at (%ld, %ld)\n", bobX, bobY);
+	redGhost->addSprite(redGhost, LEFT, bobX, bobY, 16, 16);
+	calculateSpriteLocation(7, 7, 16, 16, 320, 320, &bobX, &bobY);
+	KPrintF("Created UP sprite at (%ld, %ld)\n", bobX, bobY);
+	redGhost->addSprite(redGhost, UP, bobX, bobY, 16, 16);
 }
 
 int main()
@@ -263,6 +310,8 @@ int main()
 	USHORT *copper1 = setupCopper();
 
 	setupPacman();
+	setupBlueGhost();
+	setupRedGhost();
 
 	systemSetDmaMask(DMAF_MASTER | DMAF_RASTER | DMAF_COPPER | DMAF_BLITTER, 1); // Tell ACE to enable DMA
 
@@ -300,7 +349,39 @@ int main()
 				(const UBYTE *)pacman_tiles_mask);
 		}
 
-		keyProcess(); // Process pending keystrokes from the CIA interrupt buffer
+		// draw blue ghost
+		currentSprite = blueGhost->getSprite(blueGhost, blueGhost->direction);
+		if (currentSprite)
+		{
+			// Restore background at previous position instead of clearing to black
+			blitCopy(tBackground, blueGhost->prevX, blueGhost->prevY,
+					 tScreenBuffer, blueGhost->prevX, blueGhost->prevY,
+					 blueGhost->width, blueGhost->height, MINTERM_COOKIE);
+
+			blitCopyMask(
+				tPacmanTiles, currentSprite->x, currentSprite->y,
+				tScreenBuffer, blueGhost->x, blueGhost->y,
+				blueGhost->width, blueGhost->height,
+				(const UBYTE *)pacman_tiles_mask);
+		}
+
+		// draw red ghost
+		currentSprite = redGhost->getSprite(redGhost, redGhost->direction);
+		if (currentSprite)
+		{
+			// Restore background at previous position instead of clearing to black
+			blitCopy(tBackground, redGhost->prevX, redGhost->prevY,
+					 tScreenBuffer, redGhost->prevX, redGhost->prevY,
+					 redGhost->width, redGhost->height, MINTERM_COOKIE);
+
+			blitCopyMask(
+				tPacmanTiles, currentSprite->x, currentSprite->y,
+				tScreenBuffer, redGhost->x, redGhost->y,
+				redGhost->width, redGhost->height,
+				(const UBYTE *)pacman_tiles_mask);
+		}
+
+				keyProcess(); // Process pending keystrokes from the CIA interrupt buffer
 	}
 	KPrintF("Exit Loop!\n");
 	keyDestroy();

@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef PACMAN_H
-#define PACMAN_H
+#ifndef GHOST_H
+#define GHOST_H
 
 #include <exec/types.h>
 #include <hardware/custom.h>
@@ -12,7 +12,7 @@
 #include "routines/MemoryRoutines.h"
 #include "sprite/sprite.h"
 
-typedef struct Pacman
+typedef struct Ghost
 {
     int x;
     int y;
@@ -28,12 +28,12 @@ typedef struct Pacman
     Sprite rightSprite;
 
     // Function pointer to emulate a method call
-    void (*movePacman)(struct Pacman *p, Direction dir);
-    void (*addSprite)(struct Pacman *p, Direction dir, int spriteX, int spriteY, int width, int height);
-    Sprite *(*getSprite)(struct Pacman *p, Direction dir);
-    void (*setMap)(struct Pacman *p, UBYTE *map);
-} Pacman;
+    void (*moveGhost)(struct Ghost *g, Direction dir);
+    void (*addSprite)(struct Ghost *g, Direction dir, int spriteX, int spriteY, int width, int height);
+    Sprite *(*getSprite)(struct Ghost *g, Direction dir);
+    void (*setMap)(struct Ghost *g, UBYTE *map);
+} Ghost;
 
-Pacman *createPacman(int x, int y, int width, int height);
+Ghost *createGhost(int x, int y, int width, int height);
 
-#endif // PACMAN_H
+#endif // GHOST_H

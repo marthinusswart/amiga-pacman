@@ -1,12 +1,10 @@
 #include "pacman.h"
-#include <proto/exec.h>
-
-INCBIN_CHIP(pacman_tiles2, "bpl/pacman_tiles.bpl")
 
 // Private forward declaration
 static void movePacman(Pacman *p, Direction direction);
 static void addSprite(Pacman *p, Direction direction, int spriteX, int spriteY, int width, int height);
 static Sprite *getSprite(Pacman *p, Direction direction);
+static void setMap(Pacman *p, UBYTE *map);
 
 Pacman *createPacman(int x, int y, int width, int height)
 {
@@ -21,6 +19,8 @@ Pacman *createPacman(int x, int y, int width, int height)
     p->movePacman = movePacman; // Assign the function pointer
     p->addSprite = addSprite;   // Assign the function pointer
     p->getSprite = getSprite;   // Assign the function pointer
+    p->setMap = setMap;         // Assign the function pointer
+    p->currentMap = NULL;       // Initialize safely
     return p;
 }
 
@@ -50,6 +50,12 @@ static void movePacman(Pacman *p, Direction direction)
     if (!isValidSpriteLocation(p->x, p->y, p->width, p->height, 320, 256))
     {
         // Invalid location, revert to previous position
+        p->x = p->prevX;
+        p->y = p->prevY;
+    }
+    else if (p->currentMap && !canMove(p->currentMap, p->x, p->y))
+    {
+        // Collision detected, revert to previous position
         p->x = p->prevX;
         p->y = p->prevY;
     }
@@ -97,4 +103,9 @@ static Sprite *getSprite(Pacman *p, Direction direction)
     default:
         return NULL; // Invalid direction
     }
+}
+
+static void setMap(Pacman *p, UBYTE *map)
+{
+    p->currentMap = map;
 }
