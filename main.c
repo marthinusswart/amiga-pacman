@@ -20,6 +20,7 @@
 #include "routines/MusicRoutines.h"
 #include "routines/CopperRoutines.h"
 #include "routines/CollitionRoutines.h"
+#include "routines/PathfindingRoutines.h"
 #include "player/pacman.h"
 #include "ghost/ghost.h"
 
@@ -280,7 +281,7 @@ static void setupRedGhost(void)
 	int bobX = 0;
 	int bobY = 0;
 	KPrintF("Create Ghost!\n");
-	redGhost = createGhost(100, 116, 16, 16);
+	redGhost = createGhost(96, 112, 16, 16);
 	redGhost->setMap(redGhost, mapping_stage_0001);
 	calculateSpriteLocation(4, 7, 16, 16, 320, 320, &bobX, &bobY);
 	KPrintF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
@@ -321,7 +322,7 @@ int main()
 
 	while (!MouseLeft())
 	{
-		WaitVbl();
+		// 1. Process Input & Logic
 		if (keyCheck(KEY_ESCAPE))
 			break;
 		if (keyCheck(KEY_LEFT) || keyCheck(KEY_A))
@@ -333,24 +334,16 @@ int main()
 		else if (keyCheck(KEY_DOWN) || keyCheck(KEY_S))
 			pacman->movePacman(pacman, DOWN);
 
-		// draw pacman
-		Sprite *currentSprite = pacman->getSprite(pacman, pacman->direction);
-		if (currentSprite)
-		{
-			// Restore background at previous position instead of clearing to black
-			blitCopy(tBackground, pacman->prevX, pacman->prevY,
-					 tScreenBuffer, pacman->prevX, pacman->prevY,
-					 pacman->width, pacman->height, MINTERM_COOKIE);
+		// update red ghost pathfinding and move it
+		updateGhostDirection(redGhost, pacman);
+		redGhost->moveGhost(redGhost, redGhost->direction);
 
-			blitCopyMask(
-				tPacmanTiles, currentSprite->x, currentSprite->y,
-				tScreenBuffer, pacman->x, pacman->y,
-				pacman->width, pacman->height,
-				(const UBYTE *)pacman_tiles_mask);
-		}
+		// 2. Wait for the vertical blanking interval AFTER logic is done.
+		// This gives the Blitter a head-start before the beam reaches the top!
+		WaitVbl();
 
-		// draw blue ghost
-		currentSprite = blueGhost->getSprite(blueGhost, blueGhost->direction);
+		// Draw blue ghost
+		Sprite *currentSprite = blueGhost->getSprite(blueGhost, blueGhost->direction);
 		if (currentSprite)
 		{
 			// Restore background at previous position instead of clearing to black
@@ -381,7 +374,23 @@ int main()
 				(const UBYTE *)pacman_tiles_mask);
 		}
 
-				keyProcess(); // Process pending keystrokes from the CIA interrupt buffer
+		// draw pacman
+		currentSprite = pacman->getSprite(pacman, pacman->direction);
+		if (currentSprite)
+		{
+			// Restore background at previous position instead of clearing to black
+			blitCopy(tBackground, pacman->prevX, pacman->prevY,
+					 tScreenBuffer, pacman->prevX, pacman->prevY,
+					 pacman->width, pacman->height, MINTERM_COOKIE);
+
+			blitCopyMask(
+				tPacmanTiles, currentSprite->x, currentSprite->y,
+				tScreenBuffer, pacman->x, pacman->y,
+				pacman->width, pacman->height,
+				(const UBYTE *)pacman_tiles_mask);
+		}
+
+		keyProcess(); // Process pending keystrokes from the CIA interrupt buffer
 	}
 	KPrintF("Exit Loop!\n");
 	keyDestroy();

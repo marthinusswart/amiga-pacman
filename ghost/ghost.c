@@ -15,20 +15,31 @@ Ghost *createGhost(int x, int y, int width, int height)
     g->height = height;
     g->prevX = x;
     g->prevY = y;
+    g->speed = 1; // Default speed, can be modified later
     g->direction = RIGHT;
-    g->moveGhost = moveGhost; // Assign the function pointer
-    g->addSprite = addSprite; // Assign the function pointer
-    g->getSprite = getSprite; // Assign the function pointer
-    g->setMap = setMap;       // Assign the function pointer
-    g->currentMap = NULL;     // Initialize safely
+    g->moveGhost = moveGhost;      // Assign the function pointer
+    g->addSprite = addSprite;      // Assign the function pointer
+    g->getSprite = getSprite;      // Assign the function pointer
+    g->setMap = setMap;            // Assign the function pointer
+    g->currentMap = NULL;          // Initialize safely
+    g->movedPreviousFrame = FALSE; // Initialize movement flag
     return g;
 }
 
 static void moveGhost(Ghost *g, Direction direction)
 {
+    if (g->speed == 1 && g->movedPreviousFrame)
+    {
+        // Skip this move to create a slower movement effect
+        g->movedPreviousFrame = FALSE; // Reset for the next frame
+        return;
+    }
+
     g->prevX = g->x;
     g->prevY = g->y;
     g->direction = direction;
+    g->movedPreviousFrame = TRUE; // Set the flag for the next frame
+
     switch (direction)
     {
     case LEFT:

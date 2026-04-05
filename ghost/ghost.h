@@ -20,6 +20,8 @@ typedef struct Ghost
     int prevY;
     int width;
     int height;
+    int speed;
+    BOOL movedPreviousFrame;
     Direction direction;
     UBYTE *currentMap;
     Sprite downSprite;
