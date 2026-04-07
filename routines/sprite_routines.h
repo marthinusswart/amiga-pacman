@@ -14,5 +14,6 @@ short setupRedGhost(Ghost **redGhost);
 short setupPinkGhost(Ghost **pinkGhost);
 short setupOrangeGhost(Ghost **orangeGhost);
 short setupStartText(Sprite **startText);
+short setupGameOverText(Sprite **gameOverText);
 
 #endif // SPRITE_ROUTINES_H

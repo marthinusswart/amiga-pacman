@@ -96,7 +96,10 @@ int canMove(UBYTE *map, short *spriteX, short *spriteY, short nextX, short nextY
     return 0; // Blocked completely
 }
 
-int isColliding(int spriteAX, int spriteAY, int spriteAWidth, int spriteAHeight, int spriteBX, int spriteBY, int spriteBWidth, int spriteBHeight)
+int isColliding(int spriteAX, int spriteAY, int spriteAWidth, int spriteAHeight, int spriteBX, int spriteBY, int spriteBWidth, int spriteBHeight, int overlap)
 {
-    return (spriteAX < spriteBX + spriteBWidth && spriteAX + spriteAWidth > spriteBX && spriteAY < spriteBY + spriteBHeight && spriteAY + spriteAHeight > spriteBY);
+    return (spriteAX <= (spriteBX + spriteBWidth - overlap) &&
+            (spriteAX + spriteAWidth) >= (spriteBX + overlap) &&
+            spriteAY <= (spriteBY + spriteBHeight - overlap) &&
+            (spriteAY + spriteAHeight) >= (spriteBY + overlap));
 }

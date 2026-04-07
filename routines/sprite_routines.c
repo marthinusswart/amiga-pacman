@@ -153,13 +153,34 @@ short setupStartText(Sprite **startText)
         SPRITE_PRINTF("Failed to create Start Text!\n");
         return -1;
     }
-    calculateSpriteLocation(0, 0, 112, 16, 320, 320, &bobX, &bobY);
+    calculateSpriteLocation(0, 0, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created START TEXT sprite at (%ld, %ld)\n", bobX, bobY);
     (*startText)->x = bobX;
     (*startText)->y = bobY;
     (*startText)->width = 112;
     (*startText)->height = 16;
     (*startText)->spriteData = (const UBYTE *)pacman_tiles2; // Example: all sprites use the same data for now
+
+    return 0;
+}
+
+short setupGameOverText(Sprite **gameOverText)
+{
+    int bobX = 0;
+    int bobY = 0;
+    SPRITE_PRINTF("Create Game Over Text!\n");
+    if (createSprite(gameOverText) != 0)
+    {
+        SPRITE_PRINTF("Failed to create Game Over Text!\n");
+        return -1;
+    }
+    calculateSpriteLocation(0, 7, 16, 16, 320, 320, &bobX, &bobY);
+    SPRITE_PRINTF("Created GAME OVER TEXT sprite at (%ld, %ld)\n", bobX, bobY);
+    (*gameOverText)->x = bobX;
+    (*gameOverText)->y = bobY;
+    (*gameOverText)->width = 112;
+    (*gameOverText)->height = 16;
+    (*gameOverText)->spriteData = (const UBYTE *)pacman_tiles2; // Example: all sprites use the same data for now
 
     return 0;
 }

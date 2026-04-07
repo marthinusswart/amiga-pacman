@@ -4,9 +4,11 @@
 #include "state/state_ext.h"
 
 // clang-format off
-#define START_GAME_TEXT    0
-#define PLAYING_STATE      1
-#define CLEARED_START_TEXT 2
+#define START_GAME_TEXT         0
+#define PLAYING_STATE           1
+#define CLEARED_START_TEXT      2
+#define GAME_OVER_TEXT          3
+#define CLEAR_GAME_OVER_TEXT    4
 // clang-format on
 
 short initializeGameState();

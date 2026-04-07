@@ -30,6 +30,9 @@
 // config
 #define MUSIC_OFF
 
+// forward declarations
+static void resetGameState(void);
+
 struct ExecBase *SysBase;
 volatile struct Custom *custom;
 struct DosLibrary *DOSBase;
@@ -40,6 +43,7 @@ Ghost *redGhost;
 Ghost *pinkGhost;
 Ghost *orangeGhost;
 Sprite *startText;
+Sprite *gameOverText;
 
 // backup
 UWORD SystemInts;
@@ -266,22 +270,40 @@ static USHORT *setupCopper(void)
 
 static int processInputs(void)
 {
+	static UBYTE prevSpaceState = 0;
+	UBYTE currSpaceState = keyCheck(KEY_SPACE);
+
 	if (keyCheck(KEY_ESCAPE))
 		return 0; // Signal to break the main loop
 
-	if (keyCheck(KEY_LEFT) || keyCheck(KEY_A))
-		pacman->movePacman(pacman, LEFT);
-	else if (keyCheck(KEY_RIGHT) || keyCheck(KEY_D))
-		pacman->movePacman(pacman, RIGHT);
-	else if (keyCheck(KEY_UP) || keyCheck(KEY_W))
-		pacman->movePacman(pacman, UP);
-	else if (keyCheck(KEY_DOWN) || keyCheck(KEY_S))
-		pacman->movePacman(pacman, DOWN);
-	else if (keyCheck(KEY_SPACE))
+	if (getGameState(PLAYING_STATE) == ON)
 	{
-		updateGameState(START_GAME_TEXT, OFF);
-		updateGameState(PLAYING_STATE, ON);
+		if (keyCheck(KEY_LEFT) || keyCheck(KEY_A))
+			pacman->movePacman(pacman, LEFT);
+		else if (keyCheck(KEY_RIGHT) || keyCheck(KEY_D))
+			pacman->movePacman(pacman, RIGHT);
+		else if (keyCheck(KEY_UP) || keyCheck(KEY_W))
+			pacman->movePacman(pacman, UP);
+		else if (keyCheck(KEY_DOWN) || keyCheck(KEY_S))
+			pacman->movePacman(pacman, DOWN);
 	}
+
+	else if (currSpaceState && !prevSpaceState)
+	{
+		if (getGameState(GAME_OVER_TEXT) == ON)
+		{
+			KPrintF("Resetting game state!\n");
+			resetGameState();
+		}
+		else
+		{
+			KPrintF("Starting game state!\n");
+			updateGameState(START_GAME_TEXT, OFF);
+			updateGameState(PLAYING_STATE, ON);
+		}
+	}
+
+	prevSpaceState = currSpaceState;
 
 	return 1; // Signal to continue
 }
@@ -328,6 +350,21 @@ static void gameStartUpdates(void)
 			tBackground, 108, 112,
 			tScreenBuffers[1], 108, 112,
 			startText->width, startText->height, MINTERM_COOKIE);
+	}
+
+	if (getGameState(CLEAR_GAME_OVER_TEXT) == ON)
+	{
+		updateGameState(CLEAR_GAME_OVER_TEXT, OFF);
+		// Erase the start text by copying the background over it
+		blitCopy(
+			tBackground, 108, 16,
+			tScreenBuffers[0], 108, 16,
+			gameOverText->width, gameOverText->height, MINTERM_COOKIE);
+
+		blitCopy(
+			tBackground, 108, 16,
+			tScreenBuffers[1], 108, 16,
+			gameOverText->width, gameOverText->height, MINTERM_COOKIE);
 	}
 }
 
@@ -435,9 +472,15 @@ static void doubleBufferUpdates(void)
 	backBufferIdx = 1 - frontBufferIdx;
 }
 
+static void setGameOverState(void)
+{
+	updateGameState(START_GAME_TEXT, OFF);
+	updateGameState(GAME_OVER_TEXT, ON);
+	updateGameState(PLAYING_STATE, OFF);
+}
+
 static void resetGameState(void)
 {
-	initializeGameState();
 
 	if (pacman)
 	{
@@ -473,6 +516,8 @@ static void resetGameState(void)
 	updateGameState(START_GAME_TEXT, ON);
 	updateGameState(CLEARED_START_TEXT, OFF);
 	updateGameState(PLAYING_STATE, OFF);
+	updateGameState(GAME_OVER_TEXT, OFF);
+	updateGameState(CLEAR_GAME_OVER_TEXT, ON);
 }
 
 static int packmanCollide(Pacman *pacman, Ghost *redGhost, Ghost *blueGhost, Ghost *pinkGhost, Ghost *orangeGhost)
@@ -480,16 +525,30 @@ static int packmanCollide(Pacman *pacman, Ghost *redGhost, Ghost *blueGhost, Gho
 	if (!pacman)
 		return 0;
 
-	if (redGhost && isColliding(pacman->x, pacman->y, pacman->width, pacman->height, redGhost->x, redGhost->y, redGhost->width, redGhost->height))
+	if (redGhost && isColliding(pacman->x, pacman->y, pacman->width, pacman->height, redGhost->x, redGhost->y, redGhost->width, redGhost->height, 5))
 		return 1;
-	if (blueGhost && isColliding(pacman->x, pacman->y, pacman->width, pacman->height, blueGhost->x, blueGhost->y, blueGhost->width, blueGhost->height))
+	if (blueGhost && isColliding(pacman->x, pacman->y, pacman->width, pacman->height, blueGhost->x, blueGhost->y, blueGhost->width, blueGhost->height, 5))
 		return 1;
-	if (pinkGhost && isColliding(pacman->x, pacman->y, pacman->width, pacman->height, pinkGhost->x, pinkGhost->y, pinkGhost->width, pinkGhost->height))
+	if (pinkGhost && isColliding(pacman->x, pacman->y, pacman->width, pacman->height, pinkGhost->x, pinkGhost->y, pinkGhost->width, pinkGhost->height, 5))
 		return 1;
-	if (orangeGhost && isColliding(pacman->x, pacman->y, pacman->width, pacman->height, orangeGhost->x, orangeGhost->y, orangeGhost->width, orangeGhost->height))
+	if (orangeGhost && isColliding(pacman->x, pacman->y, pacman->width, pacman->height, orangeGhost->x, orangeGhost->y, orangeGhost->width, orangeGhost->height, 5))
 		return 1;
 
 	return 0;
+}
+
+static void displayGameOverText(void)
+{
+	blitCopyMask(
+		tPacmanTiles, gameOverText->x, gameOverText->y,
+		tScreenBuffers[0], 108, 16,
+		gameOverText->width, gameOverText->height,
+		(const UBYTE *)pacman_tiles_mask);
+	blitCopyMask(
+		tPacmanTiles, gameOverText->x, gameOverText->y,
+		tScreenBuffers[1], 108, 16,
+		gameOverText->width, gameOverText->height,
+		(const UBYTE *)pacman_tiles_mask);
 }
 
 int main()
@@ -512,6 +571,7 @@ int main()
 	setupPinkGhost(&pinkGhost);
 	setupOrangeGhost(&orangeGhost);
 	setupStartText(&startText);
+	setupGameOverText(&gameOverText);
 
 	// Initialize double buffering history trackers
 	blueLastX[0] = blueLastX[1] = blueGhost->x;
@@ -531,12 +591,13 @@ int main()
 
 	systemSetDmaMask(DMAF_MASTER | DMAF_RASTER | DMAF_COPPER | DMAF_BLITTER, 1); // Tell ACE to enable DMA
 
-	// DEMO
+	// Before game loop starts, we must set our custom interrupt handler to ensure music and copper list run during the menu screen and gameplay!
 	systemSetInt(INTB_VERTB, vblankHandler, 0);
 	keyCreate();
 	updateGameState(START_GAME_TEXT, ON);
 	updateGameState(CLEARED_START_TEXT, OFF);
 	updateGameState(PLAYING_STATE, OFF);
+	updateGameState(GAME_OVER_TEXT, OFF);
 
 	while (!MouseLeft())
 	{
@@ -576,7 +637,13 @@ int main()
 		if (packmanCollide(pacman, redGhost, blueGhost, pinkGhost, orangeGhost))
 		{
 			KPrintF("Pacman collided with a ghost!\n");
-			resetGameState();
+			setGameOverState();
+		}
+
+		// 8. Check Game Over state and reset if player clicks to restart
+		if (getGameState(GAME_OVER_TEXT) == ON)
+		{
+			displayGameOverText();
 		}
 
 		keyProcess(); // Process pending keystrokes from the CIA interrupt buffer

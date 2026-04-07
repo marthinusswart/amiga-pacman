@@ -8,6 +8,6 @@
 #include "ghost/ghost.h"
 
 int canMove(UBYTE *map, short *spriteX, short *spriteY, short nextX, short nextY);
-int isColliding(int spriteAX, int spriteAY, int spriteAWidth, int spriteAHeight, int spriteBX, int spriteBY, int spriteBWidth, int spriteBHeight);
+int isColliding(int spriteAX, int spriteAY, int spriteAWidth, int spriteAHeight, int spriteBX, int spriteBY, int spriteBWidth, int spriteBHeight, int overlap);
 
 #endif // COLLISION_ROUTINES_H
