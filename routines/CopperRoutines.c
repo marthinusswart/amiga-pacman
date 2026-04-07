@@ -2,8 +2,12 @@
 #include "support/gcc8_c_support.h"
 #include <hardware/custom.h>
 
-USHORT *copSetPlanes(UBYTE bplPtrStart, USHORT *copListEnd, const UBYTE **planes, int numPlanes)
+short copSetPlanes(UBYTE bplPtrStart, USHORT **copListEnd_out, const UBYTE **planes, int numPlanes)
 {
+    if (!copListEnd_out || !*copListEnd_out || !planes)
+        return -1;
+
+    USHORT *copListEnd = *copListEnd_out;
     for (int i = 0; i < numPlanes; i++)
     {
         ULONG addr = (ULONG)planes[i];
@@ -12,26 +16,42 @@ USHORT *copSetPlanes(UBYTE bplPtrStart, USHORT *copListEnd, const UBYTE **planes
         *copListEnd++ = (USHORT)(offsetof(struct Custom, bplpt[0]) + (i + bplPtrStart) * sizeof(APTR) + 2);
         *copListEnd++ = (UWORD)addr;
     }
-    return copListEnd;
+    *copListEnd_out = copListEnd;
+    return 0;
 }
 
-USHORT *copWaitXY(USHORT *copListEnd, USHORT x, USHORT i)
+short copWaitXY(USHORT **copListEnd_out, USHORT x, USHORT i)
 {
+    if (!copListEnd_out || !*copListEnd_out)
+        return -1;
+
+    USHORT *copListEnd = *copListEnd_out;
     *copListEnd++ = (USHORT)((i << 8) | (x << 1) | 1); // bit 1 means wait. waits for vertical position x<<8, first raster stop position outside the left
     *copListEnd++ = 0xfffe;
-    return copListEnd;
+    *copListEnd_out = copListEnd;
+    return 0;
 }
 
-USHORT *copWaitY(USHORT *copListEnd, USHORT i)
+short copWaitY(USHORT **copListEnd_out, USHORT i)
 {
+    if (!copListEnd_out || !*copListEnd_out)
+        return -1;
+
+    USHORT *copListEnd = *copListEnd_out;
     *copListEnd++ = (USHORT)((i << 8) | 4 | 1); // bit 1 means wait. waits for vertical position x<<8, first raster stop position outside the left
     *copListEnd++ = 0xfffe;
-    return copListEnd;
+    *copListEnd_out = copListEnd;
+    return 0;
 }
 
-USHORT *copSetColor(USHORT *copListCurrent, USHORT index, USHORT color)
+short copSetColor(USHORT **copListCurrent_out, USHORT index, USHORT color)
 {
+    if (!copListCurrent_out || !*copListCurrent_out)
+        return -1;
+
+    USHORT *copListCurrent = *copListCurrent_out;
     *copListCurrent++ = (USHORT)(offsetof(struct Custom, color) + sizeof(UWORD) * index);
     *copListCurrent++ = color;
-    return copListCurrent;
+    *copListCurrent_out = copListCurrent;
+    return 0;
 }

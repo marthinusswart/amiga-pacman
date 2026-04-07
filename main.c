@@ -228,12 +228,12 @@ static USHORT *setupCopper(void)
 	{
 		planes[a] = tScreenBuffers[0]->Planes[a];
 	}
-	bplPtrsInCopper = copPtr;					 // Save this globally so we can update it in the main loop!
-	copPtr = copSetPlanes(0, copPtr, planes, 5); // INJECT pointers into copper list!
+	bplPtrsInCopper = copPtr;			 // Save this globally so we can update it in the main loop!
+	copSetPlanes(0, &copPtr, planes, 5); // INJECT pointers into copper list!
 
 	// set colors
 	for (int a = 0; a < 32; a++)
-		copPtr = copSetColor(copPtr, a, ((USHORT *)colors)[a]);
+		copSetColor(&copPtr, a, ((USHORT *)colors)[a]);
 
 	// end copper list
 	*copPtr++ = 0xffff;
@@ -414,7 +414,8 @@ int main()
 			planes[a] = tScreenBuffers[backBufferIdx]->Planes[a];
 		}
 		// Safely swap the bitplane pointers in the copper list
-		copSetPlanes(0, bplPtrsInCopper, planes, 5);
+		USHORT *tempBplPtr = bplPtrsInCopper;
+		copSetPlanes(0, &tempBplPtr, planes, 5);
 
 		// Flip buffers for the next frame
 		frontBufferIdx = backBufferIdx;
