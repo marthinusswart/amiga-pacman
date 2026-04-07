@@ -1,5 +1,5 @@
-#ifndef SCREENROUTINES_H
-#define SCREENROUTINES_H
+#ifndef SCREEN_ROUTINES_H
+#define SCREEN_ROUTINES_H
 
 #include <exec/types.h>
 
@@ -16,4 +16,4 @@ short screenScanDefault(USHORT **copListEnd_out);
 void calculateSpriteLocation(int row, int col, int spriteWidth, int spriteHeight, int tilesetWidth, int tilesetHeight, int *spriteX, int *spriteY);
 BOOL isValidSpriteLocation(int x, int y, int spriteWidth, int spriteHeight, int screenWidth, int screenHeight);
 
-#endif // SCREENROUTINES_H
+#endif // SCREEN_ROUTINES_H

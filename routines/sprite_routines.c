@@ -1,4 +1,4 @@
-#include "SpriteRoutines.h"
+#include "sprite_routines.h"
 
 #define SPRITE_DEBUG_OFF
 

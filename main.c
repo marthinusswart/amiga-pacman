@@ -14,16 +14,18 @@
 #include <ace/utils/custom.h>
 #include <hardware/intbits.h>
 #include "support/gcc8_c_support.h"
-#include "routines/ScreenRoutines.h"
-#include "routines/SystemRoutines.h"
-#include "routines/MouseRoutines.h"
-#include "routines/MusicRoutines.h"
-#include "routines/CopperRoutines.h"
-#include "routines/CollitionRoutines.h"
-#include "routines/PathfindingRoutines.h"
-#include "routines/SpriteRoutines.h"
+#include "routines/screen_routines.h"
+#include "routines/system_routines.h"
+#include "routines/mouse_routines.h"
+#include "routines/music_routines.h"
+#include "routines/copper_routines.h"
+#include "routines/collision_routines.h"
+#include "routines/pathfinding_routines.h"
+#include "routines/sprite_routines.h"
 #include "player/pacman.h"
 #include "ghost/ghost.h"
+#include "routines/state_routines.h"
+#include "state/state_ext.h"
 
 // config
 #define MUSIC_OFF
@@ -54,6 +56,22 @@ int frontBufferIdx = 0;
 int backBufferIdx = 1;
 tBitMap *tPacmanTiles = NULL;
 tBitMap *tBackground = NULL;
+
+// Double buffering history trackers. Array index 0 tracks Buffer 0, index 1 tracks Buffer 1.
+static int blueLastX[2];
+static int blueLastY[2];
+
+static int redLastX[2];
+static int redLastY[2];
+
+static int pinkLastX[2];
+static int pinkLastY[2];
+
+static int orangeLastX[2];
+static int orangeLastY[2];
+
+static int pacmanLastX[2];
+static int pacmanLastY[2];
 
 // DEMO - INCBIN
 volatile short frameCounter = 0;
@@ -246,6 +264,177 @@ static USHORT *setupCopper(void)
 	return copper1;
 }
 
+static int processInputs(void)
+{
+	if (keyCheck(KEY_ESCAPE))
+		return 0; // Signal to break the main loop
+
+	if (keyCheck(KEY_LEFT) || keyCheck(KEY_A))
+		pacman->movePacman(pacman, LEFT);
+	else if (keyCheck(KEY_RIGHT) || keyCheck(KEY_D))
+		pacman->movePacman(pacman, RIGHT);
+	else if (keyCheck(KEY_UP) || keyCheck(KEY_W))
+		pacman->movePacman(pacman, UP);
+	else if (keyCheck(KEY_DOWN) || keyCheck(KEY_S))
+		pacman->movePacman(pacman, DOWN);
+	else if (keyCheck(KEY_SPACE))
+	{
+		updateGameState(START_GAME_TEXT, OFF);
+		updateGameState(PLAYING_STATE, ON);
+	}
+
+	return 1; // Signal to continue
+}
+
+static void ghostUpdates(void)
+{
+	// update red ghost pathfinding and move it
+	updateChaseGhostDirection(redGhost, pacman);
+	redGhost->moveGhost(redGhost, redGhost->direction);
+
+	// update blue ghost pathfinding and move it
+	updateUnpredictableGhostDirection(blueGhost, pacman, redGhost);
+	blueGhost->moveGhost(blueGhost, blueGhost->direction);
+
+	// update pink ghost pathfinding and move it
+	updateAmbushGhostDirection(pinkGhost, pacman);
+	pinkGhost->moveGhost(pinkGhost, pinkGhost->direction);
+
+	// update orange ghost pathfinding and move it
+	updateCowardGhostDirection(orangeGhost, pacman);
+	orangeGhost->moveGhost(orangeGhost, orangeGhost->direction);
+}
+
+static void gameStartUpdates(void)
+{
+	if (getGameState(START_GAME_TEXT) == ON)
+	{
+		blitCopyMask(
+			tPacmanTiles, startText->x, startText->y,
+			tScreenBuffers[backBufferIdx], 108, 112,
+			startText->width, startText->height,
+			(const UBYTE *)pacman_tiles_mask);
+	}
+	else if (getGameState(CLEARED_START_TEXT) == OFF)
+	{
+		updateGameState(CLEARED_START_TEXT, ON);
+		// Erase the start text by copying the background over it
+		blitCopy(
+			tBackground, 108, 112,
+			tScreenBuffers[0], 108, 112,
+			startText->width, startText->height, MINTERM_COOKIE);
+
+		blitCopy(
+			tBackground, 108, 112,
+			tScreenBuffers[1], 108, 112,
+			startText->width, startText->height, MINTERM_COOKIE);
+	}
+}
+
+static void backgroundUpdates(void)
+{
+	blitCopy(tBackground, orangeLastX[backBufferIdx], orangeLastY[backBufferIdx],
+			 tScreenBuffers[backBufferIdx], orangeLastX[backBufferIdx], orangeLastY[backBufferIdx],
+			 orangeGhost->width, orangeGhost->height, MINTERM_COOKIE);
+
+	blitCopy(tBackground, blueLastX[backBufferIdx], blueLastY[backBufferIdx],
+			 tScreenBuffers[backBufferIdx], blueLastX[backBufferIdx], blueLastY[backBufferIdx],
+			 blueGhost->width, blueGhost->height, MINTERM_COOKIE);
+
+	blitCopy(tBackground, redLastX[backBufferIdx], redLastY[backBufferIdx],
+			 tScreenBuffers[backBufferIdx], redLastX[backBufferIdx], redLastY[backBufferIdx],
+			 redGhost->width, redGhost->height, MINTERM_COOKIE);
+
+	blitCopy(tBackground, pinkLastX[backBufferIdx], pinkLastY[backBufferIdx],
+			 tScreenBuffers[backBufferIdx], pinkLastX[backBufferIdx], pinkLastY[backBufferIdx],
+			 pinkGhost->width, pinkGhost->height, MINTERM_COOKIE);
+
+	blitCopy(tBackground, pacmanLastX[backBufferIdx], pacmanLastY[backBufferIdx],
+			 tScreenBuffers[backBufferIdx], pacmanLastX[backBufferIdx], pacmanLastY[backBufferIdx],
+			 pacman->width, pacman->height, MINTERM_COOKIE);
+}
+
+static void bobUpdates(void)
+{
+	Sprite *blueSprite = NULL;
+	blueGhost->getSprite(blueGhost, blueGhost->direction, &blueSprite);
+	Sprite *redSprite = NULL;
+	redGhost->getSprite(redGhost, redGhost->direction, &redSprite);
+	Sprite *pinkSprite = NULL;
+	pinkGhost->getSprite(pinkGhost, pinkGhost->direction, &pinkSprite);
+	Sprite *orangeSprite = NULL;
+	orangeGhost->getSprite(orangeGhost, orangeGhost->direction, &orangeSprite);
+	Sprite *pacSprite = NULL;
+	pacman->getSprite(pacman, pacman->direction, &pacSprite);
+
+	// Save the locations we are about to draw to, so we can erase them next time this buffer is active
+	blueLastX[backBufferIdx] = blueGhost->x;
+	blueLastY[backBufferIdx] = blueGhost->y;
+
+	redLastX[backBufferIdx] = redGhost->x;
+	redLastY[backBufferIdx] = redGhost->y;
+
+	pinkLastX[backBufferIdx] = pinkGhost->x;
+	pinkLastY[backBufferIdx] = pinkGhost->y;
+
+	orangeLastX[backBufferIdx] = orangeGhost->x;
+	orangeLastY[backBufferIdx] = orangeGhost->y;
+
+	pacmanLastX[backBufferIdx] = pacman->x;
+	pacmanLastY[backBufferIdx] = pacman->y;
+
+	if (orangeSprite)
+		blitCopyMask(
+			tPacmanTiles, orangeSprite->x, orangeSprite->y,
+			tScreenBuffers[backBufferIdx], orangeGhost->x, orangeGhost->y,
+			orangeGhost->width, orangeGhost->height,
+			(const UBYTE *)pacman_tiles_mask);
+
+	if (blueSprite)
+		blitCopyMask(
+			tPacmanTiles, blueSprite->x, blueSprite->y,
+			tScreenBuffers[backBufferIdx], blueGhost->x, blueGhost->y,
+			blueGhost->width, blueGhost->height,
+			(const UBYTE *)pacman_tiles_mask);
+
+	if (redSprite)
+		blitCopyMask(
+			tPacmanTiles, redSprite->x, redSprite->y,
+			tScreenBuffers[backBufferIdx], redGhost->x, redGhost->y,
+			redGhost->width, redGhost->height,
+			(const UBYTE *)pacman_tiles_mask);
+
+	if (pinkSprite)
+		blitCopyMask(
+			tPacmanTiles, pinkSprite->x, pinkSprite->y,
+			tScreenBuffers[backBufferIdx], pinkGhost->x, pinkGhost->y,
+			pinkGhost->width, pinkGhost->height,
+			(const UBYTE *)pacman_tiles_mask);
+
+	if (pacSprite)
+		blitCopyMask(
+			tPacmanTiles, pacSprite->x, pacSprite->y,
+			tScreenBuffers[backBufferIdx], pacman->x, pacman->y,
+			pacman->width, pacman->height,
+			(const UBYTE *)pacman_tiles_mask);
+}
+
+static void doubleBufferUpdates(void)
+{
+	const UBYTE *planes[5];
+	for (int a = 0; a < 5; a++)
+	{
+		planes[a] = tScreenBuffers[backBufferIdx]->Planes[a];
+	}
+	// Safely swap the bitplane pointers in the copper list
+	USHORT *tempBplPtr = bplPtrsInCopper;
+	copSetPlanes(0, &tempBplPtr, planes, 5);
+
+	// Flip buffers for the next frame
+	frontBufferIdx = backBufferIdx;
+	backBufferIdx = 1 - frontBufferIdx;
+}
+
 int main()
 {
 	setupEnvironment();
@@ -258,6 +447,7 @@ int main()
 	WaitVbl();
 
 	USHORT *copper1 = setupCopper();
+	initializeGameState();
 
 	setupPacman(&pacman);
 	setupBlueGhost(&blueGhost);
@@ -266,169 +456,64 @@ int main()
 	setupOrangeGhost(&orangeGhost);
 	setupStartText(&startText);
 
-	// Double buffering history trackers. Array index 0 tracks Buffer 0, index 1 tracks Buffer 1.
-	int blueLastX[2] = {blueGhost->x, blueGhost->x};
-	int blueLastY[2] = {blueGhost->y, blueGhost->y};
-	int redLastX[2] = {redGhost->x, redGhost->x};
-	int redLastY[2] = {redGhost->y, redGhost->y};
-	int pinkLastX[2] = {pinkGhost->x, pinkGhost->x};
-	int pinkLastY[2] = {pinkGhost->y, pinkGhost->y};
-	int orangeLastX[2] = {orangeGhost->x, orangeGhost->x};
-	int orangeLastY[2] = {orangeGhost->y, orangeGhost->y};
-	int pacmanLastX[2] = {pacman->x, pacman->x};
-	int pacmanLastY[2] = {pacman->y, pacman->y};
+	// Initialize double buffering history trackers
+	blueLastX[0] = blueLastX[1] = blueGhost->x;
+	blueLastY[0] = blueLastY[1] = blueGhost->y;
+
+	redLastX[0] = redLastX[1] = redGhost->x;
+	redLastY[0] = redLastY[1] = redGhost->y;
+
+	pinkLastX[0] = pinkLastX[1] = pinkGhost->x;
+	pinkLastY[0] = pinkLastY[1] = pinkGhost->y;
+
+	orangeLastX[0] = orangeLastX[1] = orangeGhost->x;
+	orangeLastY[0] = orangeLastY[1] = orangeGhost->y;
+
+	pacmanLastX[0] = pacmanLastX[1] = pacman->x;
+	pacmanLastY[0] = pacmanLastY[1] = pacman->y;
 
 	systemSetDmaMask(DMAF_MASTER | DMAF_RASTER | DMAF_COPPER | DMAF_BLITTER, 1); // Tell ACE to enable DMA
 
 	// DEMO
 	systemSetInt(INTB_VERTB, vblankHandler, 0);
 	keyCreate();
-	BOOL gameIsRunning = FALSE;
+	updateGameState(START_GAME_TEXT, ON);
+	updateGameState(CLEARED_START_TEXT, OFF);
+	updateGameState(PLAYING_STATE, OFF);
 
 	while (!MouseLeft())
 	{
 		// 1. Process Input & Logic
-		if (keyCheck(KEY_ESCAPE))
+		if (!processInputs())
 			break;
-		if (keyCheck(KEY_LEFT) || keyCheck(KEY_A))
-			pacman->movePacman(pacman, LEFT);
-		else if (keyCheck(KEY_RIGHT) || keyCheck(KEY_D))
-			pacman->movePacman(pacman, RIGHT);
-		else if (keyCheck(KEY_UP) || keyCheck(KEY_W))
-			pacman->movePacman(pacman, UP);
-		else if (keyCheck(KEY_DOWN) || keyCheck(KEY_S))
-			pacman->movePacman(pacman, DOWN);
-		else if (keyCheck(KEY_SPACE))
-			gameIsRunning = TRUE;
 
-		if (gameIsRunning)
+		// 2. Update ghost paths and positions
+		if (getGameState(PLAYING_STATE) == ON)
 		{
-			// update red ghost pathfinding and move it
-			updateChaseGhostDirection(redGhost, pacman);
-			redGhost->moveGhost(redGhost, redGhost->direction);
-
-			// update blue ghost pathfinding and move it
-			updateUnpredictableGhostDirection(blueGhost, pacman, redGhost);
-			blueGhost->moveGhost(blueGhost, blueGhost->direction);
-
-			// update pink ghost pathfinding and move it
-			updateAmbushGhostDirection(pinkGhost, pacman);
-			pinkGhost->moveGhost(pinkGhost, pinkGhost->direction);
-
-			// update orange ghost pathfinding and move it
-			updateCowardGhostDirection(orangeGhost, pacman);
-			orangeGhost->moveGhost(orangeGhost, orangeGhost->direction);
-		}
-		else
-		{
-			blitCopyMask(
-				tPacmanTiles, startText->x, startText->y,
-				tScreenBuffers[backBufferIdx], startText->x, startText->y,
-				startText->width, startText->height,
-				(const UBYTE *)pacman_tiles_mask);
+			ghostUpdates();
 		}
 
+		// 3. Handle game start text and transition to gameplay
+		gameStartUpdates();
+
+		// 4. Update background for all objects based on their last drawn positions (before we draw them in their new positions)
 		// ==========================================
 		// CLEAR PHASE: Restore backgrounds for ALL objects
 		// ==========================================
-		blitCopy(tBackground, blueLastX[backBufferIdx], blueLastY[backBufferIdx],
-				 tScreenBuffers[backBufferIdx], blueLastX[backBufferIdx], blueLastY[backBufferIdx],
-				 blueGhost->width, blueGhost->height, MINTERM_COOKIE);
+		backgroundUpdates();
 
-		blitCopy(tBackground, redLastX[backBufferIdx], redLastY[backBufferIdx],
-				 tScreenBuffers[backBufferIdx], redLastX[backBufferIdx], redLastY[backBufferIdx],
-				 redGhost->width, redGhost->height, MINTERM_COOKIE);
-
-		blitCopy(tBackground, pinkLastX[backBufferIdx], pinkLastY[backBufferIdx],
-				 tScreenBuffers[backBufferIdx], pinkLastX[backBufferIdx], pinkLastY[backBufferIdx],
-				 pinkGhost->width, pinkGhost->height, MINTERM_COOKIE);
-
-		blitCopy(tBackground, orangeLastX[backBufferIdx], orangeLastY[backBufferIdx],
-				 tScreenBuffers[backBufferIdx], orangeLastX[backBufferIdx], orangeLastY[backBufferIdx],
-				 orangeGhost->width, orangeGhost->height, MINTERM_COOKIE);
-
-		blitCopy(tBackground, pacmanLastX[backBufferIdx], pacmanLastY[backBufferIdx],
-				 tScreenBuffers[backBufferIdx], pacmanLastX[backBufferIdx], pacmanLastY[backBufferIdx],
-				 pacman->width, pacman->height, MINTERM_COOKIE);
-
-		Sprite *blueSprite = NULL;
-		blueGhost->getSprite(blueGhost, blueGhost->direction, &blueSprite);
-		Sprite *redSprite = NULL;
-		redGhost->getSprite(redGhost, redGhost->direction, &redSprite);
-		Sprite *pinkSprite = NULL;
-		pinkGhost->getSprite(pinkGhost, pinkGhost->direction, &pinkSprite);
-		Sprite *orangeSprite = NULL;
-		orangeGhost->getSprite(orangeGhost, orangeGhost->direction, &orangeSprite);
-		Sprite *pacSprite = NULL;
-		pacman->getSprite(pacman, pacman->direction, &pacSprite);
-
+		// 5. Draw ALL objects in their new positions
 		// ==========================================
 		// DRAW PHASE: Draw ALL objects on the screen
 		// ==========================================
-		// Save the locations we are about to draw to, so we can erase them next time this buffer is active
-		blueLastX[backBufferIdx] = blueGhost->x;
-		blueLastY[backBufferIdx] = blueGhost->y;
-		redLastX[backBufferIdx] = redGhost->x;
-		redLastY[backBufferIdx] = redGhost->y;
-		pinkLastX[backBufferIdx] = pinkGhost->x;
-		pinkLastY[backBufferIdx] = pinkGhost->y;
-		orangeLastX[backBufferIdx] = orangeGhost->x;
-		orangeLastY[backBufferIdx] = orangeGhost->y;
-		pacmanLastX[backBufferIdx] = pacman->x;
-		pacmanLastY[backBufferIdx] = pacman->y;
+		bobUpdates();
 
-		if (blueSprite)
-			blitCopyMask(
-				tPacmanTiles, blueSprite->x, blueSprite->y,
-				tScreenBuffers[backBufferIdx], blueGhost->x, blueGhost->y,
-				blueGhost->width, blueGhost->height,
-				(const UBYTE *)pacman_tiles_mask);
-
-		if (redSprite)
-			blitCopyMask(
-				tPacmanTiles, redSprite->x, redSprite->y,
-				tScreenBuffers[backBufferIdx], redGhost->x, redGhost->y,
-				redGhost->width, redGhost->height,
-				(const UBYTE *)pacman_tiles_mask);
-
-		if (pinkSprite)
-			blitCopyMask(
-				tPacmanTiles, pinkSprite->x, pinkSprite->y,
-				tScreenBuffers[backBufferIdx], pinkGhost->x, pinkGhost->y,
-				pinkGhost->width, pinkGhost->height,
-				(const UBYTE *)pacman_tiles_mask);
-
-		if (orangeSprite)
-			blitCopyMask(
-				tPacmanTiles, orangeSprite->x, orangeSprite->y,
-				tScreenBuffers[backBufferIdx], orangeGhost->x, orangeGhost->y,
-				orangeGhost->width, orangeGhost->height,
-				(const UBYTE *)pacman_tiles_mask);
-
-		if (pacSprite)
-			blitCopyMask(
-				tPacmanTiles, pacSprite->x, pacSprite->y,
-				tScreenBuffers[backBufferIdx], pacman->x, pacman->y,
-				pacman->width, pacman->height,
-				(const UBYTE *)pacman_tiles_mask);
-
+		// 6. Wait for VBlank and swap buffers
 		// ==========================================
 		// SWAP PHASE: Wait for VBlank, then swap buffers
 		// ==========================================
 		WaitVbl();
-
-		const UBYTE *planes[5];
-		for (int a = 0; a < 5; a++)
-		{
-			planes[a] = tScreenBuffers[backBufferIdx]->Planes[a];
-		}
-		// Safely swap the bitplane pointers in the copper list
-		USHORT *tempBplPtr = bplPtrsInCopper;
-		copSetPlanes(0, &tempBplPtr, planes, 5);
-
-		// Flip buffers for the next frame
-		frontBufferIdx = backBufferIdx;
-		backBufferIdx = 1 - frontBufferIdx;
+		doubleBufferUpdates();
 
 		keyProcess(); // Process pending keystrokes from the CIA interrupt buffer
 	}

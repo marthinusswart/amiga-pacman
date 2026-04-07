@@ -1,4 +1,4 @@
-#include "CollitionRoutines.h"
+#include "collision_routines.h"
 
 // Simple macro to get tile type at pixel X,Y
 // Using bit-shifts (>> 4) instead of division ( / 16) for 68k speed!

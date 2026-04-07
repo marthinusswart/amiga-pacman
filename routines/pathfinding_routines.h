@@ -1,5 +1,5 @@
-#ifndef PATHFINDINGROUTINES_H
-#define PATHFINDINGROUTINES_H
+#ifndef PATHFINDING_ROUTINES_H
+#define PATHFINDING_ROUTINES_H
 
 #include "ghost/ghost.h"
 #include "player/pacman.h"
@@ -16,4 +16,4 @@ void updateAmbushGhostDirection(Ghost *g, Pacman *p);
 // Calculates Clyde's coward direction by targeting Pac-Man unless too close, then retreating to his corner
 void updateCowardGhostDirection(Ghost *g, Pacman *p);
 
-#endif // PATHFINDINGROUTINES_H
+#endif // PATHFINDING_ROUTINES_H

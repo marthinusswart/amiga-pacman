@@ -7,9 +7,9 @@
 #include <hardware/custom.h>
 #include <proto/exec.h>
 #include "support/gcc8_c_support.h"
-#include "routines/ScreenRoutines.h"
-#include "routines/CollitionRoutines.h"
-#include "routines/MemoryRoutines.h"
+#include "routines/screen_routines.h"
+#include "routines/collision_routines.h"
+#include "routines/memory_routines.h"
 #include "sprite/sprite_ext.h"
 
 typedef struct Ghost

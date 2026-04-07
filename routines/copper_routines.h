@@ -1,5 +1,5 @@
-#ifndef COPPERROUTINES_H
-#define COPPERROUTINES_H
+#ifndef COPPER_ROUTINES_H
+#define COPPER_ROUTINES_H
 
 #include <exec/types.h>
 
@@ -8,4 +8,4 @@ short copWaitXY(USHORT **copListEnd_out, USHORT x, USHORT i);
 short copWaitY(USHORT **copListEnd_out, USHORT i);
 short copSetColor(USHORT **copListCurrent_out, USHORT index, USHORT color);
 
-#endif // COPPERROUTINES_H
+#endif // COPPER_ROUTINES_H
