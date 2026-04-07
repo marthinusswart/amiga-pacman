@@ -3,7 +3,7 @@
 // Private forward declaration
 static void movePacman(Pacman *p, Direction direction);
 static void addSprite(Pacman *p, Direction direction, int spriteX, int spriteY, int width, int height);
-static Sprite *getSprite(Pacman *p, Direction direction);
+static short getSprite(Pacman *p, Direction direction, Sprite **sprite_out);
 static void setMap(Pacman *p, UBYTE *map);
 
 short createPacman(Pacman **p_out, int x, int y, int width, int height)
@@ -107,20 +107,28 @@ static void addSprite(Pacman *p, Direction direction, int spriteX, int spriteY, 
     sprite->spriteData = (const UBYTE *)pacman_tiles2; // Example: all sprites use the same data for now
 }
 
-static Sprite *getSprite(Pacman *p, Direction direction)
+static short getSprite(Pacman *p, Direction direction, Sprite **sprite_out)
 {
+    if (!sprite_out)
+        return -1;
+
     switch (direction)
     {
     case LEFT:
-        return &p->leftSprite;
+        *sprite_out = &p->leftSprite;
+        return 0;
     case UP:
-        return &p->upSprite;
+        *sprite_out = &p->upSprite;
+        return 0;
     case RIGHT:
-        return &p->rightSprite;
+        *sprite_out = &p->rightSprite;
+        return 0;
     case DOWN:
-        return &p->downSprite;
+        *sprite_out = &p->downSprite;
+        return 0;
     default:
-        return NULL; // Invalid direction
+        *sprite_out = NULL;
+        return -1; // Invalid direction
     }
 }
 

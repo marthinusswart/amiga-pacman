@@ -3,7 +3,7 @@
 // Private forward declaration
 static void moveGhost(Ghost *g, Direction direction);
 static void addSprite(Ghost *g, Direction direction, int spriteX, int spriteY, int width, int height);
-static Sprite *getSprite(Ghost *g, Direction direction);
+static short getSprite(Ghost *g, Direction direction, Sprite **sprite_out);
 static void setMap(Ghost *g, UBYTE *map);
 
 short createGhost(Ghost **g_out, int x, int y, int width, int height)
@@ -117,20 +117,28 @@ static void addSprite(Ghost *g, Direction direction, int spriteX, int spriteY, i
     sprite->spriteData = (const UBYTE *)pacman_tiles2; // Example: all sprites use the same data for now
 }
 
-static Sprite *getSprite(Ghost *g, Direction direction)
+static short getSprite(Ghost *g, Direction direction, Sprite **sprite_out)
 {
+    if (!sprite_out)
+        return -1;
+
     switch (direction)
     {
     case LEFT:
-        return &g->leftSprite;
+        *sprite_out = &g->leftSprite;
+        return 0;
     case UP:
-        return &g->upSprite;
+        *sprite_out = &g->upSprite;
+        return 0;
     case RIGHT:
-        return &g->rightSprite;
+        *sprite_out = &g->rightSprite;
+        return 0;
     case DOWN:
-        return &g->downSprite;
+        *sprite_out = &g->downSprite;
+        return 0;
     default:
-        return NULL; // Invalid direction
+        *sprite_out = NULL;
+        return -1; // Invalid direction
     }
 }
 

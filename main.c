@@ -342,11 +342,16 @@ int main()
 				 tScreenBuffers[backBufferIdx], pacmanLastX[backBufferIdx], pacmanLastY[backBufferIdx],
 				 pacman->width, pacman->height, MINTERM_COOKIE);
 
-		Sprite *blueSprite = blueGhost->getSprite(blueGhost, blueGhost->direction);
-		Sprite *redSprite = redGhost->getSprite(redGhost, redGhost->direction);
-		Sprite *pinkSprite = pinkGhost->getSprite(pinkGhost, pinkGhost->direction);
-		Sprite *orangeSprite = orangeGhost->getSprite(orangeGhost, orangeGhost->direction);
-		Sprite *pacSprite = pacman->getSprite(pacman, pacman->direction);
+		Sprite *blueSprite = NULL;
+		blueGhost->getSprite(blueGhost, blueGhost->direction, &blueSprite);
+		Sprite *redSprite = NULL;
+		redGhost->getSprite(redGhost, redGhost->direction, &redSprite);
+		Sprite *pinkSprite = NULL;
+		pinkGhost->getSprite(pinkGhost, pinkGhost->direction, &pinkSprite);
+		Sprite *orangeSprite = NULL;
+		orangeGhost->getSprite(orangeGhost, orangeGhost->direction, &orangeSprite);
+		Sprite *pacSprite = NULL;
+		pacman->getSprite(pacman, pacman->direction, &pacSprite);
 
 		// ==========================================
 		// DRAW PHASE: Draw ALL objects on the screen

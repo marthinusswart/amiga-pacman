@@ -32,7 +32,7 @@ typedef struct Ghost
     // Function pointer to emulate a method call
     void (*moveGhost)(struct Ghost *g, Direction dir);
     void (*addSprite)(struct Ghost *g, Direction dir, int spriteX, int spriteY, int width, int height);
-    Sprite *(*getSprite)(struct Ghost *g, Direction dir);
+    short (*getSprite)(struct Ghost *g, Direction dir, Sprite **sprite_out);
     void (*setMap)(struct Ghost *g, UBYTE *map);
 } Ghost;
 
