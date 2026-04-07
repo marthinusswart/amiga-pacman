@@ -24,7 +24,11 @@ void setupPacman(void)
     int bobX = 0;
     int bobY = 0;
     SPRITE_PRINTF("Create Pacman!\n");
-    pacman = createPacman(208, 150, 16, 16);
+    if (createPacman(&pacman, 192, 150, 16, 16) != 0)
+    {
+        SPRITE_PRINTF("Failed to create Pacman!\n");
+        return;
+    }
     pacman->setMap(pacman, mapping_stage_0001);
     calculateSpriteLocation(3, 9, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
@@ -45,7 +49,11 @@ void setupBlueGhost(void)
     int bobX = 0;
     int bobY = 0;
     SPRITE_PRINTF("Create Ghost!\n");
-    blueGhost = createGhost(144, 96, 16, 16);
+    if (createGhost(&blueGhost, 144, 96, 16, 16) != 0)
+    {
+        SPRITE_PRINTF("Failed to create Blue Ghost!\n");
+        return;
+    }
     blueGhost->setMap(blueGhost, mapping_stage_0001);
     calculateSpriteLocation(4, 1, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
@@ -66,7 +74,11 @@ void setupRedGhost(void)
     int bobX = 0;
     int bobY = 0;
     SPRITE_PRINTF("Create Ghost!\n");
-    redGhost = createGhost(128, 96, 16, 16);
+    if (createGhost(&redGhost, 128, 96, 16, 16) != 0)
+    {
+        SPRITE_PRINTF("Failed to create Red Ghost!\n");
+        return;
+    }
     redGhost->setMap(redGhost, mapping_stage_0001);
     calculateSpriteLocation(4, 7, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
@@ -87,7 +99,11 @@ void setupPinkGhost(void)
     int bobX = 0;
     int bobY = 0;
     SPRITE_PRINTF("Create Ghost!\n");
-    pinkGhost = createGhost(160, 96, 16, 16);
+    if (createGhost(&pinkGhost, 160, 96, 16, 16) != 0)
+    {
+        SPRITE_PRINTF("Failed to create Pink Ghost!\n");
+        return;
+    }
     pinkGhost->setMap(pinkGhost, mapping_stage_0001);
     calculateSpriteLocation(4, 5, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
@@ -108,7 +124,11 @@ void setupOrangeGhost(void)
     int bobX = 0;
     int bobY = 0;
     SPRITE_PRINTF("Create Ghost!\n");
-    orangeGhost = createGhost(176, 96, 16, 16);
+    if (createGhost(&orangeGhost, 176, 96, 16, 16) != 0)
+    {
+        SPRITE_PRINTF("Failed to create Orange Ghost!\n");
+        return;
+    }
     orangeGhost->setMap(orangeGhost, mapping_stage_0001);
     calculateSpriteLocation(4, 3, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);

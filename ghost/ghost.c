@@ -6,9 +6,15 @@ static void addSprite(Ghost *g, Direction direction, int spriteX, int spriteY, i
 static Sprite *getSprite(Ghost *g, Direction direction);
 static void setMap(Ghost *g, UBYTE *map);
 
-Ghost *createGhost(int x, int y, int width, int height)
+short createGhost(Ghost **g_out, int x, int y, int width, int height)
 {
+    if (!g_out)
+        return -1;
+
     Ghost *g = (Ghost *)AllocMem(sizeof(Ghost), MEMF_CHIP | MEMF_CLEAR);
+    if (!g)
+        return -1; // Memory allocation failed
+
     g->x = x;
     g->y = y;
     g->width = width;
@@ -23,7 +29,9 @@ Ghost *createGhost(int x, int y, int width, int height)
     g->setMap = setMap;            // Assign the function pointer
     g->currentMap = NULL;          // Initialize safely
     g->movedPreviousFrame = FALSE; // Initialize movement flag
-    return g;
+
+    *g_out = g; // Assign to the caller's pointer
+    return 0;   // Success
 }
 
 static void moveGhost(Ghost *g, Direction direction)
@@ -40,35 +48,45 @@ static void moveGhost(Ghost *g, Direction direction)
     g->direction = direction;
     g->movedPreviousFrame = TRUE; // Set the flag for the next frame
 
+    short nextX = g->x;
+    short nextY = g->y;
+
     switch (direction)
     {
     case LEFT:
-        g->x -= 1;
+        nextX -= 1;
         break;
     case UP:
-        g->y -= 1;
+        nextY -= 1;
         break;
     case RIGHT:
-        g->x += 1;
+        nextX += 1;
         break;
     case DOWN:
-        g->y += 1;
+        nextY += 1;
         break;
     default:
         break;
     }
 
-    if (!isValidSpriteLocation(g->x, g->y, g->width, g->height, 320, 256))
+    if (!isValidSpriteLocation(nextX, nextY, g->width, g->height, 320, 256))
     {
-        // Invalid location, revert to previous position
-        g->x = g->prevX;
-        g->y = g->prevY;
+        // Invalid location, do nothing
     }
-    else if (g->currentMap && !canMove(g->currentMap, g->x, g->y))
+    else if (g->currentMap)
     {
-        // Collision detected, revert to previous position
-        g->x = g->prevX;
-        g->y = g->prevY;
+        short sx = g->x;
+        short sy = g->y;
+        if (canMove(g->currentMap, &sx, &sy, nextX, nextY))
+        {
+            g->x = sx;
+            g->y = sy;
+        }
+    }
+    else
+    {
+        g->x = nextX;
+        g->y = nextY;
     }
 }
 

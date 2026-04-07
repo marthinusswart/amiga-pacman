@@ -60,7 +60,7 @@ static void calculateNextDirection(Ghost *g, int targetX, int targetY)
         }
 
         // 2. Check for collisions using the map
-        if (g->currentMap && !canMove(g->currentMap, nextX, nextY))
+        if (g->currentMap && !canMove(g->currentMap, 0, 0, nextX, nextY))
             continue;
 
         // 3. Calculate distance squared

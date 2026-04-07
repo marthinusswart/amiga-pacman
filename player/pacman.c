@@ -6,9 +6,15 @@ static void addSprite(Pacman *p, Direction direction, int spriteX, int spriteY, 
 static Sprite *getSprite(Pacman *p, Direction direction);
 static void setMap(Pacman *p, UBYTE *map);
 
-Pacman *createPacman(int x, int y, int width, int height)
+short createPacman(Pacman **p_out, int x, int y, int width, int height)
 {
+    if (!p_out)
+        return -1;
+
     Pacman *p = (Pacman *)AllocMem(sizeof(Pacman), MEMF_CHIP | MEMF_CLEAR);
+    if (!p)
+        return -1; // Memory allocation failed
+
     p->x = x;
     p->y = y;
     p->width = width;
@@ -21,7 +27,9 @@ Pacman *createPacman(int x, int y, int width, int height)
     p->getSprite = getSprite;   // Assign the function pointer
     p->setMap = setMap;         // Assign the function pointer
     p->currentMap = NULL;       // Initialize safely
-    return p;
+
+    *p_out = p; // Assign to the caller's pointer
+    return 0;   // Success
 }
 
 static void movePacman(Pacman *p, Direction direction)
@@ -29,35 +37,46 @@ static void movePacman(Pacman *p, Direction direction)
     p->prevX = p->x;
     p->prevY = p->y;
     p->direction = direction;
+
+    short nextX = p->x;
+    short nextY = p->y;
+
     switch (direction)
     {
     case LEFT:
-        p->x -= 1;
+        nextX -= 1;
         break;
     case UP:
-        p->y -= 1;
+        nextY -= 1;
         break;
     case RIGHT:
-        p->x += 1;
+        nextX += 1;
         break;
     case DOWN:
-        p->y += 1;
+        nextY += 1;
         break;
     default:
         break;
     }
 
-    if (!isValidSpriteLocation(p->x, p->y, p->width, p->height, 320, 256))
+    if (!isValidSpriteLocation(nextX, nextY, p->width, p->height, 320, 256))
     {
-        // Invalid location, revert to previous position
-        p->x = p->prevX;
-        p->y = p->prevY;
+        // Invalid location, do nothing
     }
-    else if (p->currentMap && !canMove(p->currentMap, p->x, p->y))
+    else if (p->currentMap)
     {
-        // Collision detected, revert to previous position
-        p->x = p->prevX;
-        p->y = p->prevY;
+        short sx = p->x;
+        short sy = p->y;
+        if (canMove(p->currentMap, &sx, &sy, nextX, nextY))
+        {
+            p->x = sx;
+            p->y = sy;
+        }
+    }
+    else
+    {
+        p->x = nextX;
+        p->y = nextY;
     }
 }
 

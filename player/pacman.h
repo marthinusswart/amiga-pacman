@@ -34,6 +34,6 @@ typedef struct Pacman
     void (*setMap)(struct Pacman *p, UBYTE *map);
 } Pacman;
 
-Pacman *createPacman(int x, int y, int width, int height);
+short createPacman(Pacman **p_out, int x, int y, int width, int height);
 
 #endif // PACMAN_H

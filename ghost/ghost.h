@@ -36,6 +36,6 @@ typedef struct Ghost
     void (*setMap)(struct Ghost *g, UBYTE *map);
 } Ghost;
 
-Ghost *createGhost(int x, int y, int width, int height);
+short createGhost(Ghost **g_out, int x, int y, int width, int height);
 
 #endif // GHOST_H
