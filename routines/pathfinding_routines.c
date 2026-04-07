@@ -202,29 +202,28 @@ void updateCowardGhostDirection(Ghost *g, Pacman *p)
         ULONG startTime = timerGetPrec();
 #endif
 
-        // int dx = g->x - p->x;
-        // int dy = g->y - p->y;
-        // int dist_sq = (dx * dx) + (dy * dy);
+        int dx = g->x - p->x;
+        int dy = g->y - p->y;
+        int dist_sq = (dx * dx) + (dy * dy);
 
-        // int targetX, targetY;
+        int targetX, targetY;
 
-        // // Check if distance is greater than 4 tiles
-        // // 4 tiles * 16 pixels = 64 pixels. 64^2 = 4096.
-        // if (dist_sq > 4096)
-        // {
-        //     // Far away: target Pac-Man directly
-        //     targetX = p->x;
-        //     targetY = p->y;
-        // }
-        // else
-        // {
-        //     // Close by (panicking): retreat to his home corner (Bottom-Left)
-        //     targetX = 64;
-        //     targetY = 192;
-        // }
-        calculateNextDirection(g, p->x, p->y);
+        // Check if distance is greater than 8 tiles
+        // 8 tiles * 16 pixels = 128 pixels. 128^2 = 16384.
+        if (dist_sq > 16384)
+        {
+            // Far away: target Pac-Man directly
+            targetX = p->x;
+            targetY = p->y;
+        }
+        else
+        {
+            // Close by (panicking): retreat to his home corner (Bottom-Left)
+            targetX = 64;
+            targetY = 192;
+        }
 
-        // calculateNextDirection(g, targetX, targetY);
+        calculateNextDirection(g, targetX, targetY);
 
 #ifdef DEBUG_PATHFINDING
         ULONG endTime = timerGetPrec();

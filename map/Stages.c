@@ -1,4 +1,4 @@
-#include "Stages.h"
+#include "stages.h"
 
 // clang-format off
 // Example: 0 = Path, 1 = Wall, 2 = Pellet, 3 = Power Pill

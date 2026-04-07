@@ -5,7 +5,7 @@
 #include "sprite/sprite_ext.h"
 #include "ghost/ghost.h"
 #include "routines/screen_routines.h"
-#include "map/Stages.h"
+#include "map/stages.h"
 #include "support/gcc8_c_support.h"
 
 short setupPacman(Pacman **pacman);
