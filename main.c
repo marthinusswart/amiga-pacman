@@ -435,6 +435,63 @@ static void doubleBufferUpdates(void)
 	backBufferIdx = 1 - frontBufferIdx;
 }
 
+static void resetGameState(void)
+{
+	initializeGameState();
+
+	if (pacman)
+	{
+		pacman->x = 192;
+		pacman->y = 150;
+		pacman->direction = RIGHT;
+	}
+	if (blueGhost)
+	{
+		blueGhost->x = 144;
+		blueGhost->y = 96;
+		blueGhost->direction = RIGHT;
+	}
+	if (redGhost)
+	{
+		redGhost->x = 128;
+		redGhost->y = 96;
+		redGhost->direction = RIGHT;
+	}
+	if (pinkGhost)
+	{
+		pinkGhost->x = 160;
+		pinkGhost->y = 96;
+		pinkGhost->direction = RIGHT;
+	}
+	if (orangeGhost)
+	{
+		orangeGhost->x = 176;
+		orangeGhost->y = 96;
+		orangeGhost->direction = RIGHT;
+	}
+
+	updateGameState(START_GAME_TEXT, ON);
+	updateGameState(CLEARED_START_TEXT, OFF);
+	updateGameState(PLAYING_STATE, OFF);
+}
+
+static int packmanCollide(Pacman *pacman, Ghost *redGhost, Ghost *blueGhost, Ghost *pinkGhost, Ghost *orangeGhost)
+{
+	if (!pacman)
+		return 0;
+
+	if (redGhost && isColliding(pacman->x, pacman->y, pacman->width, pacman->height, redGhost->x, redGhost->y, redGhost->width, redGhost->height))
+		return 1;
+	if (blueGhost && isColliding(pacman->x, pacman->y, pacman->width, pacman->height, blueGhost->x, blueGhost->y, blueGhost->width, blueGhost->height))
+		return 1;
+	if (pinkGhost && isColliding(pacman->x, pacman->y, pacman->width, pacman->height, pinkGhost->x, pinkGhost->y, pinkGhost->width, pinkGhost->height))
+		return 1;
+	if (orangeGhost && isColliding(pacman->x, pacman->y, pacman->width, pacman->height, orangeGhost->x, orangeGhost->y, orangeGhost->width, orangeGhost->height))
+		return 1;
+
+	return 0;
+}
+
 int main()
 {
 	setupEnvironment();
@@ -514,6 +571,13 @@ int main()
 		// ==========================================
 		WaitVbl();
 		doubleBufferUpdates();
+
+		// 7. Check for collisions between Pacman and the ghosts
+		if (packmanCollide(pacman, redGhost, blueGhost, pinkGhost, orangeGhost))
+		{
+			KPrintF("Pacman collided with a ghost!\n");
+			resetGameState();
+		}
 
 		keyProcess(); // Process pending keystrokes from the CIA interrupt buffer
 	}
