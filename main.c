@@ -44,6 +44,8 @@ Ghost *pinkGhost;
 Ghost *orangeGhost;
 Sprite *startText;
 Sprite *gameOverText;
+Sprite *powerPill;
+Sprite *pellet;
 
 // backup
 UWORD SystemInts;
@@ -551,6 +553,87 @@ static void displayGameOverText(void)
 		(const UBYTE *)pacman_tiles_mask);
 }
 
+static void addPowerPillsToMap(Sprite *pill)
+{
+	if (!pill || !tBackground || !tPacmanTiles)
+		return;
+
+	for (int i = 0; i < 320; i++)
+	{
+		if (mapping_stage_0001[i] == 2) // 2 = Power Pill
+		{
+			int tileX = (i % 20) * 16;
+			int tileY = (i / 20) * 16;
+
+			// Add to the permanent background
+			blitCopyMask(
+				tPacmanTiles, pill->x, pill->y,
+				tBackground, tileX, tileY,
+				pill->width, pill->height,
+				(const UBYTE *)pacman_tiles_mask);
+
+			// Add to the front and back screen buffers to make it immediately visible
+			blitCopyMask(
+				tPacmanTiles, pill->x, pill->y,
+				tScreenBuffers[0], tileX, tileY,
+				pill->width, pill->height,
+				(const UBYTE *)pacman_tiles_mask);
+			blitCopyMask(
+				tPacmanTiles, pill->x, pill->y,
+				tScreenBuffers[1], tileX, tileY,
+				pill->width, pill->height,
+				(const UBYTE *)pacman_tiles_mask);
+		}
+	}
+}
+
+static void addPelletsToMap(Sprite *pellet)
+{
+	if (!pellet || !tBackground || !tPacmanTiles)
+		return;
+
+	for (int i = 0; i < 320; i++)
+	{
+		if (mapping_stage_0001[i] == 0) // 0 = Path (Pellet)
+		{
+			int tileX = (i % 20) * 16;
+			int tileY = (i / 20) * 16;
+
+			// Add to the permanent background
+			blitCopyMask(
+				tPacmanTiles, pellet->x, pellet->y,
+				tBackground, tileX, tileY,
+				pellet->width, pellet->height,
+				(const UBYTE *)pacman_tiles_mask);
+
+			// Add to the front and back screen buffers to make it immediately visible
+			blitCopyMask(
+				tPacmanTiles, pellet->x, pellet->y,
+				tScreenBuffers[0], tileX, tileY,
+				pellet->width, pellet->height,
+				(const UBYTE *)pacman_tiles_mask);
+			blitCopyMask(
+				tPacmanTiles, pellet->x, pellet->y,
+				tScreenBuffers[1], tileX, tileY,
+				pellet->width, pellet->height,
+				(const UBYTE *)pacman_tiles_mask);
+		}
+	}
+}
+
+static void setupSprites(void)
+{
+	setupPacman(&pacman);
+	setupBlueGhost(&blueGhost);
+	setupRedGhost(&redGhost);
+	setupPinkGhost(&pinkGhost);
+	setupOrangeGhost(&orangeGhost);
+	setupStartText(&startText);
+	setupGameOverText(&gameOverText);
+	setupPowerPill(&powerPill);
+	setupPellets(&pellet);
+}
+
 int main()
 {
 	setupEnvironment();
@@ -565,13 +648,7 @@ int main()
 	USHORT *copper1 = setupCopper();
 	initializeGameState();
 
-	setupPacman(&pacman);
-	setupBlueGhost(&blueGhost);
-	setupRedGhost(&redGhost);
-	setupPinkGhost(&pinkGhost);
-	setupOrangeGhost(&orangeGhost);
-	setupStartText(&startText);
-	setupGameOverText(&gameOverText);
+	setupSprites();
 
 	// Initialize double buffering history trackers
 	blueLastX[0] = blueLastX[1] = blueGhost->x;
@@ -598,6 +675,9 @@ int main()
 	updateGameState(CLEARED_START_TEXT, OFF);
 	updateGameState(PLAYING_STATE, OFF);
 	updateGameState(GAME_OVER_TEXT, OFF);
+
+	addPowerPillsToMap(powerPill);
+	addPelletsToMap(pellet);
 
 	while (!MouseLeft())
 	{

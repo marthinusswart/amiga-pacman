@@ -184,3 +184,45 @@ short setupGameOverText(Sprite **gameOverText)
 
     return 0;
 }
+
+short setupPowerPill(Sprite **powerPill)
+{
+    int bobX = 0;
+    int bobY = 0;
+    SPRITE_PRINTF("Create Power Pill!\n");
+    if (createSprite(powerPill) != 0)
+    {
+        SPRITE_PRINTF("Failed to create Power Pill!\n");
+        return -1;
+    }
+    calculateSpriteLocation(2, 0, 16, 16, 320, 320, &bobX, &bobY);
+    SPRITE_PRINTF("Created POWER PILL sprite at (%ld, %ld)\n", bobX, bobY);
+    (*powerPill)->x = bobX;
+    (*powerPill)->y = bobY;
+    (*powerPill)->width = 16;
+    (*powerPill)->height = 16;
+    (*powerPill)->spriteData = (const UBYTE *)pacman_tiles2; // Example: all sprites use the same data for now
+
+    return 0;
+}
+
+short setupPellets(Sprite **pellet)
+{
+    int bobX = 0;
+    int bobY = 0;
+    SPRITE_PRINTF("Create Pellet!\n");
+    if (createSprite(pellet) != 0)
+    {
+        SPRITE_PRINTF("Failed to create Pellet!\n");
+        return -1;
+    }
+    calculateSpriteLocation(2, 1, 16, 16, 320, 320, &bobX, &bobY);
+    SPRITE_PRINTF("Created PELLET sprite at (%ld, %ld)\n", bobX, bobY);
+    (*pellet)->x = bobX;
+    (*pellet)->y = bobY;
+    (*pellet)->width = 16;
+    (*pellet)->height = 16;
+    (*pellet)->spriteData = (const UBYTE *)pacman_tiles2; // Example: all sprites use the same data for now
+
+    return 0;
+}
