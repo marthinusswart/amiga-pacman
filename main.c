@@ -206,7 +206,7 @@ static USHORT *setupCopper(void)
 		CopyMem(tBackground->Planes[p], tScreenBuffers[1]->Planes[p], (320 / 8) * 256);
 	}
 
-	copPtr = screenScanDefault(copPtr);
+	screenScanDefault(&copPtr);
 
 	// enable bitplanes
 	*copPtr++ = offsetof(struct Custom, bplcon0);
@@ -259,11 +259,12 @@ int main()
 
 	USHORT *copper1 = setupCopper();
 
-	setupPacman();
-	setupBlueGhost();
-	setupRedGhost();
-	setupPinkGhost();
-	setupOrangeGhost();
+	setupPacman(&pacman);
+	setupBlueGhost(&blueGhost);
+	setupRedGhost(&redGhost);
+	setupPinkGhost(&pinkGhost);
+	setupOrangeGhost(&orangeGhost);
+	setupStartText(&startText);
 
 	// Double buffering history trackers. Array index 0 tracks Buffer 0, index 1 tracks Buffer 1.
 	int blueLastX[2] = {blueGhost->x, blueGhost->x};
@@ -317,6 +318,14 @@ int main()
 			// update orange ghost pathfinding and move it
 			updateCowardGhostDirection(orangeGhost, pacman);
 			orangeGhost->moveGhost(orangeGhost, orangeGhost->direction);
+		}
+		else
+		{
+			blitCopyMask(
+				tPacmanTiles, startText->x, startText->y,
+				tScreenBuffers[backBufferIdx], startText->x, startText->y,
+				startText->width, startText->height,
+				(const UBYTE *)pacman_tiles_mask);
 		}
 
 		// ==========================================

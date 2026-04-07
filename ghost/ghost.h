@@ -10,7 +10,7 @@
 #include "routines/ScreenRoutines.h"
 #include "routines/CollitionRoutines.h"
 #include "routines/MemoryRoutines.h"
-#include "sprite/sprite.h"
+#include "sprite/sprite_ext.h"
 
 typedef struct Ghost
 {

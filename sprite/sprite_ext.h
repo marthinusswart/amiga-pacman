@@ -1,5 +1,5 @@
-#ifndef SPRITE_H
-#define SPRITE_H
+#ifndef SPRITE_EXT_H
+#define SPRITE_EXT_H
 
 #include <exec/types.h>
 
@@ -20,4 +20,6 @@ typedef struct Sprite
     const UBYTE *spriteData;
 } Sprite;
 
-#endif // SPRITE_H
+short createSprite(Sprite **sprite_out);
+
+#endif // SPRITE_EXT_H

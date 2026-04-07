@@ -71,8 +71,12 @@ void WaitBlt(void)
 }
 
 // set up a 320x256 lowres display
-USHORT *screenScanDefault(USHORT *copListEnd)
+short screenScanDefault(USHORT **copListEnd_out)
 {
+    if (!copListEnd_out || !*copListEnd_out)
+        return -1;
+
+    USHORT *copListEnd = *copListEnd_out;
     const USHORT x = 129;
     const USHORT width = 320;
     const USHORT height = 256;
@@ -90,7 +94,9 @@ USHORT *screenScanDefault(USHORT *copListEnd)
     *copListEnd++ = x + (y << 8);
     *copListEnd++ = offsetof(struct Custom, diwstop);
     *copListEnd++ = (xstop - 256) + ((ystop - 256) << 8);
-    return copListEnd;
+
+    *copListEnd_out = copListEnd;
+    return 0;
 }
 
 // Calculates the X and Y pixel coordinates of a sprite within a tileset

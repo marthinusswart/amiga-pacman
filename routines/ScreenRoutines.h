@@ -11,7 +11,7 @@ void WaitVbl(void);
 void WaitLine(USHORT line);
 void WaitBlt(void);
 
-USHORT *screenScanDefault(USHORT *copListEnd);
+short screenScanDefault(USHORT **copListEnd_out);
 // Calculates the X and Y pixel coordinates of a sprite within a tileset
 void calculateSpriteLocation(int row, int col, int spriteWidth, int spriteHeight, int tilesetWidth, int tilesetHeight, int *spriteX, int *spriteY);
 BOOL isValidSpriteLocation(int x, int y, int spriteWidth, int spriteHeight, int screenWidth, int screenHeight);
