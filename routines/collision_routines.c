@@ -103,3 +103,9 @@ int isColliding(int spriteAX, int spriteAY, int spriteAWidth, int spriteAHeight,
             spriteAY <= (spriteBY + spriteBHeight - overlap) &&
             (spriteAY + spriteAHeight) >= (spriteBY + overlap));
 }
+
+int tileHasPellet(UBYTE *pelletsOnMap, int x, int y)
+{
+    UBYTE tileValue = GET_TILE(pelletsOnMap, x, y);
+    return (tileValue == 1);
+}

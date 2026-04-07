@@ -32,6 +32,7 @@
 
 // forward declarations
 static void resetGameState(void);
+static void addPelletsToMap(Sprite *pellet);
 
 struct ExecBase *SysBase;
 volatile struct Custom *custom;
@@ -78,6 +79,8 @@ static int orangeLastY[2];
 
 static int pacmanLastX[2];
 static int pacmanLastY[2];
+
+static UBYTE pelletsOnMap[320];
 
 // DEMO - INCBIN
 volatile short frameCounter = 0;
@@ -515,6 +518,8 @@ static void resetGameState(void)
 		orangeGhost->direction = RIGHT;
 	}
 
+	addPelletsToMap(pellet);
+
 	updateGameState(START_GAME_TEXT, ON);
 	updateGameState(CLEARED_START_TEXT, OFF);
 	updateGameState(PLAYING_STATE, OFF);
@@ -522,7 +527,7 @@ static void resetGameState(void)
 	updateGameState(CLEAR_GAME_OVER_TEXT, ON);
 }
 
-static int packmanCollide(Pacman *pacman, Ghost *redGhost, Ghost *blueGhost, Ghost *pinkGhost, Ghost *orangeGhost)
+static int pacmanCollide(Pacman *pacman, Ghost *redGhost, Ghost *blueGhost, Ghost *pinkGhost, Ghost *orangeGhost)
 {
 	if (!pacman)
 		return 0;
@@ -594,8 +599,10 @@ static void addPelletsToMap(Sprite *pellet)
 
 	for (int i = 0; i < 320; i++)
 	{
+		pelletsOnMap[i] = 0;			// Clear pellet state
 		if (mapping_stage_0001[i] == 0) // 0 = Path (Pellet)
 		{
+			pelletsOnMap[i] = 1; // Mark pellet as present on the map
 			int tileX = (i % 20) * 16;
 			int tileY = (i / 20) * 16;
 
@@ -618,6 +625,32 @@ static void addPelletsToMap(Sprite *pellet)
 				pellet->width, pellet->height,
 				(const UBYTE *)pacman_tiles_mask);
 		}
+	}
+}
+
+static void updatePellets(Pacman *pacman, UBYTE *pelletsOnMap, tBitMap *tBackground, tBitMap *frontBuffer, tBitMap *backBuffer)
+{
+	if (!pacman || !pelletsOnMap || !tBackground || !frontBuffer || !backBuffer)
+		return;
+
+	// Calculate the center of Pac-Man to determine which tile he is currently eating
+	int centerX = pacman->x + (pacman->width / 2);
+	int centerY = pacman->y + (pacman->height / 2);
+
+	if (tileHasPellet(pelletsOnMap, centerX, centerY))
+	{
+		int tileCol = centerX >> 4; // divide by 16
+		int tileRow = centerY >> 4; // divide by 16
+		int tileIndex = tileRow * 20 + tileCol;
+
+		pelletsOnMap[tileIndex] = 0;
+		KPrintF("Pellet picked up!\n");
+
+		int tileX = tileCol * 16;
+		int tileY = tileRow * 16;
+
+		// Erase the pellet by filling its 16x16 bounding box with color 0 (black)
+		blitRect(tBackground, tileX, tileY, 16, 16, 0);
 	}
 }
 
@@ -685,6 +718,12 @@ int main()
 		if (!processInputs())
 			break;
 
+		// 2. Update pellets on the map based on Pacman's position
+		if (getGameState(PLAYING_STATE) == ON)
+		{
+			updatePellets(pacman, pelletsOnMap, tBackground, tScreenBuffers[0], tScreenBuffers[1]);
+		}
+
 		// 2. Update ghost paths and positions
 		if (getGameState(PLAYING_STATE) == ON)
 		{
@@ -714,7 +753,7 @@ int main()
 		doubleBufferUpdates();
 
 		// 7. Check for collisions between Pacman and the ghosts
-		if (packmanCollide(pacman, redGhost, blueGhost, pinkGhost, orangeGhost))
+		if (pacmanCollide(pacman, redGhost, blueGhost, pinkGhost, orangeGhost))
 		{
 			KPrintF("Pacman collided with a ghost!\n");
 			setGameOverState();

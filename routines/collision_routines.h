@@ -9,5 +9,6 @@
 
 int canMove(UBYTE *map, short *spriteX, short *spriteY, short nextX, short nextY);
 int isColliding(int spriteAX, int spriteAY, int spriteAWidth, int spriteAHeight, int spriteBX, int spriteBY, int spriteBWidth, int spriteBHeight, int overlap);
+int tileHasPellet(UBYTE *map, int x, int y);
 
 #endif // COLLISION_ROUTINES_H
