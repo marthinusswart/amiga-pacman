@@ -22,55 +22,6 @@ static const char *KEY_INTENA = "INTENA";
 static const char *KEY_DMACON = "DMACON";
 static const char *KEY_ACTIVIEW = "ACTIVIEW";
 
-void TakeSystem(void)
-{
-    Forbid();
-
-    // Create the queue if it doesn't exist
-    if (!systemStateQueue)
-    {
-        systemStateQueue = queueCreate();
-    }
-
-    // Save current interrupts and DMA settings so we can restore them upon exit (using local vars)
-    UWORD systemADKCON = custom->adkconr;
-    UWORD systemInts = custom->intenar;
-    UWORD systemDMA = custom->dmaconr;
-    struct View *actiView = GfxBase->ActiView; // store current view
-
-    // Push the values to the queue as they are retrieved
-    queuePush(systemStateQueue, (void *)KEY_ADKCON, (void *)(ULONG)systemADKCON);
-    queuePush(systemStateQueue, (void *)KEY_INTENA, (void *)(ULONG)systemInts);
-    queuePush(systemStateQueue, (void *)KEY_DMACON, (void *)(ULONG)systemDMA);
-    queuePush(systemStateQueue, (void *)KEY_ACTIVIEW, (void *)actiView);
-
-    LoadView(0);
-    WaitTOF();
-    WaitTOF();
-
-    WaitVbl();
-    WaitVbl();
-
-    OwnBlitter();
-    WaitBlt();
-    Disable();
-
-    custom->intena = 0x7fff; // disable all interrupts
-    custom->intreq = 0x7fff; // Clear any interrupts that were pending
-    custom->dmacon = 0x7fff; // Clear all DMA channels
-
-    // set all colors black
-    for (int a = 0; a < 32; a++)
-        custom->color[a] = 0;
-
-    WaitVbl();
-    WaitVbl();
-
-    VBR = GetVBR();
-    SystemIrq = GetInterruptHandler(); // store interrupt register
-}
-
-void FreeSystem(void)
 {
     WaitVbl();
     WaitBlt();

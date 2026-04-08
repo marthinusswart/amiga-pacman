@@ -99,26 +99,6 @@ static void vblankHandler(volatile struct Custom *pCustom, volatile void *pData)
 	frameCounter++;
 }
 
-#ifdef __cplusplus
-class TestClass
-{
-public:
-	TestClass(int y)
-	{
-		static int x = 7;
-		i = y + x;
-	}
-	~TestClass()
-	{
-		KPrintF("~TestClass()");
-	}
-
-	int i;
-};
-
-TestClass staticClass(4);
-#endif
-
 static void Wait10() { WaitLine(0x10); }
 static void Wait11() { WaitLine(0x11); }
 static void Wait12() { WaitLine(0x12); }
