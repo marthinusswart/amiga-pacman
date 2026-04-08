@@ -1,4 +1,5 @@
 #include "sprite_routines.h"
+#include "routines/pathfinding_routines.h"
 
 #define SPRITE_DEBUG_OFF
 
@@ -225,4 +226,23 @@ short setupPellets(Sprite **pellet)
     (*pellet)->spriteData = (const UBYTE *)pacman_tiles2; // Example: all sprites use the same data for now
 
     return 0;
+}
+
+void ghostUpdates(Pacman *pacman, Ghost *redGhost, Ghost *blueGhost, Ghost *pinkGhost, Ghost *orangeGhost)
+{
+    // update red ghost pathfinding and move it
+    updateChaseGhostDirection(redGhost, pacman);
+    redGhost->moveGhost(redGhost, redGhost->direction);
+
+    // update blue ghost pathfinding and move it
+    updateUnpredictableGhostDirection(blueGhost, pacman, redGhost);
+    blueGhost->moveGhost(blueGhost, blueGhost->direction);
+
+    // update pink ghost pathfinding and move it
+    updateAmbushGhostDirection(pinkGhost, pacman);
+    pinkGhost->moveGhost(pinkGhost, pinkGhost->direction);
+
+    // update orange ghost pathfinding and move it
+    updateCowardGhostDirection(orangeGhost, pacman);
+    orangeGhost->moveGhost(orangeGhost, orangeGhost->direction);
 }

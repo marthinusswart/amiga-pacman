@@ -12,6 +12,9 @@
 #include "routines/memory_routines.h"
 #include "sprite/sprite_ext.h"
 
+// Forward declaration to avoid circular dependency with ghost.h
+typedef struct Ghost Ghost;
+
 typedef struct Pacman
 {
     int x;
@@ -32,6 +35,7 @@ typedef struct Pacman
     void (*addSprite)(struct Pacman *p, Direction dir, int spriteX, int spriteY, int width, int height);
     short (*getSprite)(struct Pacman *p, Direction dir, Sprite **sprite_out);
     void (*setMap)(struct Pacman *p, UBYTE *map);
+    int (*isPacmanColliding)(struct Pacman *p, struct Ghost *redGhost, struct Ghost *blueGhost, struct Ghost *pinkGhost, struct Ghost *orangeGhost);
 } Pacman;
 
 short createPacman(Pacman **p_out, int x, int y, int width, int height);

@@ -1,10 +1,12 @@
 #include "pacman.h"
+#include "ghost/ghost.h"
 
 // Private forward declaration
 static void movePacman(Pacman *p, Direction direction);
 static void addSprite(Pacman *p, Direction direction, int spriteX, int spriteY, int width, int height);
 static short getSprite(Pacman *p, Direction direction, Sprite **sprite_out);
 static void setMap(Pacman *p, UBYTE *map);
+static int isPacmanColliding(Pacman *p, Ghost *redGhost, Ghost *blueGhost, Ghost *pinkGhost, Ghost *orangeGhost);
 
 short createPacman(Pacman **p_out, int x, int y, int width, int height)
 {
@@ -22,11 +24,12 @@ short createPacman(Pacman **p_out, int x, int y, int width, int height)
     p->prevX = x;
     p->prevY = y;
     p->direction = RIGHT;
-    p->movePacman = movePacman; // Assign the function pointer
-    p->addSprite = addSprite;   // Assign the function pointer
-    p->getSprite = getSprite;   // Assign the function pointer
-    p->setMap = setMap;         // Assign the function pointer
-    p->currentMap = NULL;       // Initialize safely
+    p->movePacman = movePacman;               // Assign the function pointer
+    p->addSprite = addSprite;                 // Assign the function pointer
+    p->getSprite = getSprite;                 // Assign the function pointer
+    p->setMap = setMap;                       // Assign the function pointer
+    p->isPacmanColliding = isPacmanColliding; // Assign the function pointer
+    p->currentMap = NULL;                     // Initialize safely
 
     *p_out = p; // Assign to the caller's pointer
     return 0;   // Success
@@ -135,4 +138,21 @@ static short getSprite(Pacman *p, Direction direction, Sprite **sprite_out)
 static void setMap(Pacman *p, UBYTE *map)
 {
     p->currentMap = map;
+}
+
+static int isPacmanColliding(Pacman *p, Ghost *redGhost, Ghost *blueGhost, Ghost *pinkGhost, Ghost *orangeGhost)
+{
+    if (!p)
+        return 0;
+
+    if (redGhost && isColliding(p->x, p->y, p->width, p->height, redGhost->x, redGhost->y, redGhost->width, redGhost->height, 5))
+        return 1;
+    if (blueGhost && isColliding(p->x, p->y, p->width, p->height, blueGhost->x, blueGhost->y, blueGhost->width, blueGhost->height, 5))
+        return 1;
+    if (pinkGhost && isColliding(p->x, p->y, p->width, p->height, pinkGhost->x, pinkGhost->y, pinkGhost->width, pinkGhost->height, 5))
+        return 1;
+    if (orangeGhost && isColliding(p->x, p->y, p->width, p->height, orangeGhost->x, orangeGhost->y, orangeGhost->width, orangeGhost->height, 5))
+        return 1;
+
+    return 0;
 }

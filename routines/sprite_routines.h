@@ -18,4 +18,6 @@ short setupGameOverText(Sprite **gameOverText);
 short setupPowerPill(Sprite **powerPill);
 short setupPellets(Sprite **pellet);
 
+void ghostUpdates(Pacman *pacman, Ghost *redGhost, Ghost *blueGhost, Ghost *pinkGhost, Ghost *orangeGhost);
+
 #endif // SPRITE_ROUTINES_H

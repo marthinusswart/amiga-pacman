@@ -276,25 +276,6 @@ static int processInputs(void)
 	return 1; // Signal to continue
 }
 
-static void ghostUpdates(void)
-{
-	// update red ghost pathfinding and move it
-	updateChaseGhostDirection(redGhost, pacman);
-	redGhost->moveGhost(redGhost, redGhost->direction);
-
-	// update blue ghost pathfinding and move it
-	updateUnpredictableGhostDirection(blueGhost, pacman, redGhost);
-	blueGhost->moveGhost(blueGhost, blueGhost->direction);
-
-	// update pink ghost pathfinding and move it
-	updateAmbushGhostDirection(pinkGhost, pacman);
-	pinkGhost->moveGhost(pinkGhost, pinkGhost->direction);
-
-	// update orange ghost pathfinding and move it
-	updateCowardGhostDirection(orangeGhost, pacman);
-	orangeGhost->moveGhost(orangeGhost, orangeGhost->direction);
-}
-
 static void gameStartUpdates(void)
 {
 	if (getGameState(START_GAME_TEXT) == ON)
@@ -490,23 +471,6 @@ static void resetGameState(void)
 	updateGameState(CLEAR_GAME_OVER_TEXT, ON);
 }
 
-static int pacmanCollide(Pacman *pacman, Ghost *redGhost, Ghost *blueGhost, Ghost *pinkGhost, Ghost *orangeGhost)
-{
-	if (!pacman)
-		return 0;
-
-	if (redGhost && isColliding(pacman->x, pacman->y, pacman->width, pacman->height, redGhost->x, redGhost->y, redGhost->width, redGhost->height, 5))
-		return 1;
-	if (blueGhost && isColliding(pacman->x, pacman->y, pacman->width, pacman->height, blueGhost->x, blueGhost->y, blueGhost->width, blueGhost->height, 5))
-		return 1;
-	if (pinkGhost && isColliding(pacman->x, pacman->y, pacman->width, pacman->height, pinkGhost->x, pinkGhost->y, pinkGhost->width, pinkGhost->height, 5))
-		return 1;
-	if (orangeGhost && isColliding(pacman->x, pacman->y, pacman->width, pacman->height, orangeGhost->x, orangeGhost->y, orangeGhost->width, orangeGhost->height, 5))
-		return 1;
-
-	return 0;
-}
-
 static void displayGameOverText(void)
 {
 	blitCopyMask(
@@ -690,7 +654,7 @@ int main()
 		// 2. Update ghost paths and positions
 		if (getGameState(PLAYING_STATE) == ON)
 		{
-			ghostUpdates();
+			ghostUpdates(pacman, redGhost, blueGhost, pinkGhost, orangeGhost);
 		}
 
 		// 3. Handle game start text and transition to gameplay
@@ -716,7 +680,7 @@ int main()
 		doubleBufferUpdates();
 
 		// 7. Check for collisions between Pacman and the ghosts
-		if (pacmanCollide(pacman, redGhost, blueGhost, pinkGhost, orangeGhost))
+		if (pacman->isPacmanColliding(pacman, redGhost, blueGhost, pinkGhost, orangeGhost))
 		{
 			KPrintF("Pacman collided with a ghost!\n");
 			setGameOverState();
