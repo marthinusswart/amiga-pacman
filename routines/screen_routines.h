@@ -2,6 +2,24 @@
 #define SCREEN_ROUTINES_H
 
 #include <exec/types.h>
+#include <proto/exec.h>
+#include <exec/execbase.h>
+#include <hardware/custom.h>
+#include "support/gcc8_c_support.h"
+
+// Entity IDs for double buffering history trackers
+#define PACMAN 0
+#define BLUE 1
+#define RED 2
+#define PINK 3
+#define ORANGE 4
+#define NUM_ENTITIES 5
+
+typedef struct
+{
+    int x;
+    int y;
+} Position;
 
 APTR GetVBR(void);
 void SetInterruptHandler(APTR interrupt);

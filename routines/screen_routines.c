@@ -1,8 +1,4 @@
 #include "screen_routines.h"
-#include <proto/exec.h>
-#include <exec/execbase.h>
-#include <hardware/custom.h>
-#include "support/gcc8_c_support.h"
 
 extern struct ExecBase *SysBase;
 extern volatile APTR VBR;

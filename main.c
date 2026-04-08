@@ -65,20 +65,7 @@ tBitMap *tPacmanTiles = NULL;
 tBitMap *tBackground = NULL;
 
 // Double buffering history trackers. Array index 0 tracks Buffer 0, index 1 tracks Buffer 1.
-static int blueLastX[2];
-static int blueLastY[2];
-
-static int redLastX[2];
-static int redLastY[2];
-
-static int pinkLastX[2];
-static int pinkLastY[2];
-
-static int orangeLastX[2];
-static int orangeLastY[2];
-
-static int pacmanLastX[2];
-static int pacmanLastY[2];
+static Position lastPosition[NUM_ENTITIES][2];
 
 static UBYTE pelletsOnMap[320];
 
@@ -355,24 +342,24 @@ static void gameStartUpdates(void)
 
 static void backgroundUpdates(void)
 {
-	blitCopy(tBackground, orangeLastX[backBufferIdx], orangeLastY[backBufferIdx],
-			 tScreenBuffers[backBufferIdx], orangeLastX[backBufferIdx], orangeLastY[backBufferIdx],
+	blitCopy(tBackground, lastPosition[ORANGE][backBufferIdx].x, lastPosition[ORANGE][backBufferIdx].y,
+			 tScreenBuffers[backBufferIdx], lastPosition[ORANGE][backBufferIdx].x, lastPosition[ORANGE][backBufferIdx].y,
 			 orangeGhost->width, orangeGhost->height, MINTERM_COOKIE);
 
-	blitCopy(tBackground, blueLastX[backBufferIdx], blueLastY[backBufferIdx],
-			 tScreenBuffers[backBufferIdx], blueLastX[backBufferIdx], blueLastY[backBufferIdx],
+	blitCopy(tBackground, lastPosition[BLUE][backBufferIdx].x, lastPosition[BLUE][backBufferIdx].y,
+			 tScreenBuffers[backBufferIdx], lastPosition[BLUE][backBufferIdx].x, lastPosition[BLUE][backBufferIdx].y,
 			 blueGhost->width, blueGhost->height, MINTERM_COOKIE);
 
-	blitCopy(tBackground, redLastX[backBufferIdx], redLastY[backBufferIdx],
-			 tScreenBuffers[backBufferIdx], redLastX[backBufferIdx], redLastY[backBufferIdx],
+	blitCopy(tBackground, lastPosition[RED][backBufferIdx].x, lastPosition[RED][backBufferIdx].y,
+			 tScreenBuffers[backBufferIdx], lastPosition[RED][backBufferIdx].x, lastPosition[RED][backBufferIdx].y,
 			 redGhost->width, redGhost->height, MINTERM_COOKIE);
 
-	blitCopy(tBackground, pinkLastX[backBufferIdx], pinkLastY[backBufferIdx],
-			 tScreenBuffers[backBufferIdx], pinkLastX[backBufferIdx], pinkLastY[backBufferIdx],
+	blitCopy(tBackground, lastPosition[PINK][backBufferIdx].x, lastPosition[PINK][backBufferIdx].y,
+			 tScreenBuffers[backBufferIdx], lastPosition[PINK][backBufferIdx].x, lastPosition[PINK][backBufferIdx].y,
 			 pinkGhost->width, pinkGhost->height, MINTERM_COOKIE);
 
-	blitCopy(tBackground, pacmanLastX[backBufferIdx], pacmanLastY[backBufferIdx],
-			 tScreenBuffers[backBufferIdx], pacmanLastX[backBufferIdx], pacmanLastY[backBufferIdx],
+	blitCopy(tBackground, lastPosition[PACMAN][backBufferIdx].x, lastPosition[PACMAN][backBufferIdx].y,
+			 tScreenBuffers[backBufferIdx], lastPosition[PACMAN][backBufferIdx].x, lastPosition[PACMAN][backBufferIdx].y,
 			 pacman->width, pacman->height, MINTERM_COOKIE);
 }
 
@@ -390,20 +377,20 @@ static void bobUpdates(void)
 	pacman->getSprite(pacman, pacman->direction, &pacSprite);
 
 	// Save the locations we are about to draw to, so we can erase them next time this buffer is active
-	blueLastX[backBufferIdx] = blueGhost->x;
-	blueLastY[backBufferIdx] = blueGhost->y;
+	lastPosition[BLUE][backBufferIdx].x = blueGhost->x;
+	lastPosition[BLUE][backBufferIdx].y = blueGhost->y;
 
-	redLastX[backBufferIdx] = redGhost->x;
-	redLastY[backBufferIdx] = redGhost->y;
+	lastPosition[RED][backBufferIdx].x = redGhost->x;
+	lastPosition[RED][backBufferIdx].y = redGhost->y;
 
-	pinkLastX[backBufferIdx] = pinkGhost->x;
-	pinkLastY[backBufferIdx] = pinkGhost->y;
+	lastPosition[PINK][backBufferIdx].x = pinkGhost->x;
+	lastPosition[PINK][backBufferIdx].y = pinkGhost->y;
 
-	orangeLastX[backBufferIdx] = orangeGhost->x;
-	orangeLastY[backBufferIdx] = orangeGhost->y;
+	lastPosition[ORANGE][backBufferIdx].x = orangeGhost->x;
+	lastPosition[ORANGE][backBufferIdx].y = orangeGhost->y;
 
-	pacmanLastX[backBufferIdx] = pacman->x;
-	pacmanLastY[backBufferIdx] = pacman->y;
+	lastPosition[PACMAN][backBufferIdx].x = pacman->x;
+	lastPosition[PACMAN][backBufferIdx].y = pacman->y;
 
 	if (orangeSprite)
 		blitCopyMask(
@@ -664,20 +651,20 @@ int main()
 	setupSprites();
 
 	// Initialize double buffering history trackers
-	blueLastX[0] = blueLastX[1] = blueGhost->x;
-	blueLastY[0] = blueLastY[1] = blueGhost->y;
+	lastPosition[BLUE][0].x = lastPosition[BLUE][1].x = blueGhost->x;
+	lastPosition[BLUE][0].y = lastPosition[BLUE][1].y = blueGhost->y;
 
-	redLastX[0] = redLastX[1] = redGhost->x;
-	redLastY[0] = redLastY[1] = redGhost->y;
+	lastPosition[RED][0].x = lastPosition[RED][1].x = redGhost->x;
+	lastPosition[RED][0].y = lastPosition[RED][1].y = redGhost->y;
 
-	pinkLastX[0] = pinkLastX[1] = pinkGhost->x;
-	pinkLastY[0] = pinkLastY[1] = pinkGhost->y;
+	lastPosition[PINK][0].x = lastPosition[PINK][1].x = pinkGhost->x;
+	lastPosition[PINK][0].y = lastPosition[PINK][1].y = pinkGhost->y;
 
-	orangeLastX[0] = orangeLastX[1] = orangeGhost->x;
-	orangeLastY[0] = orangeLastY[1] = orangeGhost->y;
+	lastPosition[ORANGE][0].x = lastPosition[ORANGE][1].x = orangeGhost->x;
+	lastPosition[ORANGE][0].y = lastPosition[ORANGE][1].y = orangeGhost->y;
 
-	pacmanLastX[0] = pacmanLastX[1] = pacman->x;
-	pacmanLastY[0] = pacmanLastY[1] = pacman->y;
+	lastPosition[PACMAN][0].x = lastPosition[PACMAN][1].x = pacman->x;
+	lastPosition[PACMAN][0].y = lastPosition[PACMAN][1].y = pacman->y;
 
 	systemSetDmaMask(DMAF_MASTER | DMAF_RASTER | DMAF_COPPER | DMAF_BLITTER, 1); // Tell ACE to enable DMA
 
