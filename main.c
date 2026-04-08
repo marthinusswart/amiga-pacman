@@ -99,11 +99,7 @@ static void setupEnvironment(void)
 	DOSBase = (struct DosLibrary *)OpenLibrary((CONST_STRPTR) "dos.library", 0);
 	GfxBase = (struct GfxBase *)OpenLibrary((CONST_STRPTR) "graphics.library", 0);
 
-#ifdef __cplusplus
-	KPrintF("Hello debugger from Amiga: %ld!\n", staticClass.i);
-#else
 	KPrintF("Hello debugger from Amiga!\n");
-#endif
 
 	if (DOSBase)
 	{
