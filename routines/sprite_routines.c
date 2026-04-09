@@ -1,5 +1,6 @@
 #include "sprite_routines.h"
 #include "routines/pathfinding_routines.h"
+#include <ace/managers/blit.h>
 
 #define SPRITE_DEBUG_OFF
 
@@ -245,4 +246,41 @@ void ghostUpdates(Pacman *pacman, Ghost *redGhost, Ghost *blueGhost, Ghost *pink
     // update orange ghost pathfinding and move it
     updateCowardGhostDirection(orangeGhost, pacman);
     orangeGhost->moveGhost(orangeGhost, orangeGhost->direction);
+}
+
+int addPowerPillsToMap(Sprite *pill, tBitMap *background, tBitMap *pacmanTiles,
+                       tBitMap **screenBuffers, const UBYTE *tilesMask, const UBYTE *mapData)
+{
+    if (!pill || !background || !pacmanTiles || !screenBuffers || !tilesMask || !mapData)
+        return -1;
+
+    for (int i = 0; i < 320; i++)
+    {
+        if (mapData[i] == 2) // 2 = Power Pill
+        {
+            int tileX = (i % 20) * 16;
+            int tileY = (i / 20) * 16;
+
+            // Add to the permanent background
+            blitCopyMask(
+                pacmanTiles, pill->x, pill->y,
+                background, tileX, tileY,
+                pill->width, pill->height,
+                tilesMask);
+
+            // Add to the front and back screen buffers to make it immediately visible
+            blitCopyMask(
+                pacmanTiles, pill->x, pill->y,
+                screenBuffers[0], tileX, tileY,
+                pill->width, pill->height,
+                tilesMask);
+            blitCopyMask(
+                pacmanTiles, pill->x, pill->y,
+                screenBuffers[1], tileX, tileY,
+                pill->width, pill->height,
+                tilesMask);
+        }
+    }
+
+    return 0;
 }

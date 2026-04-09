@@ -18,6 +18,9 @@ short setupGameOverText(Sprite **gameOverText);
 short setupPowerPill(Sprite **powerPill);
 short setupPellets(Sprite **pellet);
 
+int addPowerPillsToMap(Sprite *pill, tBitMap *background, tBitMap *pacmanTiles,
+					   tBitMap **screenBuffers, const UBYTE *tilesMask, const UBYTE *mapData);
+
 void ghostUpdates(Pacman *pacman, Ghost *redGhost, Ghost *blueGhost, Ghost *pinkGhost, Ghost *orangeGhost);
 
 #endif // SPRITE_ROUTINES_H
