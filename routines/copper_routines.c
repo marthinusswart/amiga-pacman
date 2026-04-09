@@ -20,30 +20,6 @@ short copSetPlanes(UBYTE bplPtrStart, USHORT **copListEnd_out, const UBYTE **pla
     return 0;
 }
 
-short copWaitXY(USHORT **copListEnd_out, USHORT x, USHORT i)
-{
-    if (!copListEnd_out || !*copListEnd_out)
-        return -1;
-
-    USHORT *copListEnd = *copListEnd_out;
-    *copListEnd++ = (USHORT)((i << 8) | (x << 1) | 1); // bit 1 means wait. waits for vertical position x<<8, first raster stop position outside the left
-    *copListEnd++ = 0xfffe;
-    *copListEnd_out = copListEnd;
-    return 0;
-}
-
-short copWaitY(USHORT **copListEnd_out, USHORT i)
-{
-    if (!copListEnd_out || !*copListEnd_out)
-        return -1;
-
-    USHORT *copListEnd = *copListEnd_out;
-    *copListEnd++ = (USHORT)((i << 8) | 4 | 1); // bit 1 means wait. waits for vertical position x<<8, first raster stop position outside the left
-    *copListEnd++ = 0xfffe;
-    *copListEnd_out = copListEnd;
-    return 0;
-}
-
 short copSetColor(USHORT **copListCurrent_out, USHORT index, USHORT color)
 {
     if (!copListCurrent_out || !*copListCurrent_out)

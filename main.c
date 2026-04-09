@@ -164,11 +164,8 @@ static void teardownEnvironment(void)
 	}
 }
 
-static USHORT *setupCopper(void)
+static void setupBuffers(void)
 {
-	USHORT *copper1 = (USHORT *)AllocMem(1024, MEMF_CHIP);
-	USHORT *copPtr = copper1;
-
 	// 1. Create PLANAR screen buffers safely using ACE (BMF_DISPLAYABLE forces CHIP RAM)
 	tScreenBuffers[0] = bitmapCreate(320, 256, 5, BMF_CLEAR | BMF_DISPLAYABLE);
 	tScreenBuffers[1] = bitmapCreate(320, 256, 5, BMF_CLEAR | BMF_DISPLAYABLE);
@@ -195,6 +192,18 @@ static USHORT *setupCopper(void)
 		CopyMem(tBackground->Planes[p], tScreenBuffers[0]->Planes[p], (320 / 8) * 256);
 		CopyMem(tBackground->Planes[p], tScreenBuffers[1]->Planes[p], (320 / 8) * 256);
 	}
+}
+
+static int setupCopper(USHORT **copper1_out, tBitMap *screenBuffer)
+{
+	if (!copper1_out || !screenBuffer)
+		return -1;
+
+	USHORT *copper1 = (USHORT *)AllocMem(1024, MEMF_CHIP);
+	if (!copper1)
+		return -1;
+
+	USHORT *copPtr = copper1;
 
 	screenScanDefault(&copPtr);
 
@@ -216,7 +225,7 @@ static USHORT *setupCopper(void)
 	const UBYTE *planes[5];
 	for (int a = 0; a < 5; a++)
 	{
-		planes[a] = tScreenBuffers[0]->Planes[a];
+		planes[a] = screenBuffer->Planes[a];
 	}
 	bplPtrsInCopper = copPtr;			 // Save this globally so we can update it in the main loop!
 	copSetPlanes(0, &copPtr, planes, 5); // INJECT pointers into copper list!
@@ -233,7 +242,8 @@ static USHORT *setupCopper(void)
 	custom->dmacon = DMAF_BLITTER; // disable blitter dma for copjmp bug
 	custom->copjmp1 = 0x7fff;	   // start coppper
 
-	return copper1;
+	*copper1_out = copper1;
+	return 0;
 }
 
 static int processInputs(void)
@@ -605,7 +615,13 @@ int main()
 	warpmode(0);
 	WaitVbl();
 
-	USHORT *copper1 = setupCopper();
+	setupBuffers();
+	USHORT *copper1;
+	if (setupCopper(&copper1, tScreenBuffers[0]) != 0)
+	{
+		KPrintF("Failed to setup copper\n");
+		return 0;
+	}
 	initializeGameState();
 
 	setupSprites();
