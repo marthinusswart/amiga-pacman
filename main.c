@@ -357,6 +357,30 @@ static void setupSprites(void)
 	setupPellets(&pellet);
 }
 
+static int initializePositionTrackers(Position positions[][2], Ghost *blue, Ghost *red,
+									  Ghost *pink, Ghost *orange, Pacman *pacman)
+{
+	if (!positions || !blue || !red || !pink || !orange || !pacman)
+		return -1;
+
+	positions[BLUE][0].x = positions[BLUE][1].x = blue->x;
+	positions[BLUE][0].y = positions[BLUE][1].y = blue->y;
+
+	positions[RED][0].x = positions[RED][1].x = red->x;
+	positions[RED][0].y = positions[RED][1].y = red->y;
+
+	positions[PINK][0].x = positions[PINK][1].x = pink->x;
+	positions[PINK][0].y = positions[PINK][1].y = pink->y;
+
+	positions[ORANGE][0].x = positions[ORANGE][1].x = orange->x;
+	positions[ORANGE][0].y = positions[ORANGE][1].y = orange->y;
+
+	positions[PACMAN][0].x = positions[PACMAN][1].x = pacman->x;
+	positions[PACMAN][0].y = positions[PACMAN][1].y = pacman->y;
+
+	return 0;
+}
+
 int main()
 {
 	setupEnvironment();
@@ -385,20 +409,7 @@ int main()
 	setupSprites();
 
 	// Initialize double buffering history trackers
-	lastPosition[BLUE][0].x = lastPosition[BLUE][1].x = blueGhost->x;
-	lastPosition[BLUE][0].y = lastPosition[BLUE][1].y = blueGhost->y;
-
-	lastPosition[RED][0].x = lastPosition[RED][1].x = redGhost->x;
-	lastPosition[RED][0].y = lastPosition[RED][1].y = redGhost->y;
-
-	lastPosition[PINK][0].x = lastPosition[PINK][1].x = pinkGhost->x;
-	lastPosition[PINK][0].y = lastPosition[PINK][1].y = pinkGhost->y;
-
-	lastPosition[ORANGE][0].x = lastPosition[ORANGE][1].x = orangeGhost->x;
-	lastPosition[ORANGE][0].y = lastPosition[ORANGE][1].y = orangeGhost->y;
-
-	lastPosition[PACMAN][0].x = lastPosition[PACMAN][1].x = pacman->x;
-	lastPosition[PACMAN][0].y = lastPosition[PACMAN][1].y = pacman->y;
+	initializePositionTrackers(lastPosition, blueGhost, redGhost, pinkGhost, orangeGhost, pacman);
 
 	systemSetDmaMask(DMAF_MASTER | DMAF_RASTER | DMAF_COPPER | DMAF_BLITTER, 1); // Tell ACE to enable DMA
 
@@ -415,7 +426,7 @@ int main()
 	addPelletsToMap(pellet, pelletsOnMap, tBackground, tPacmanTiles, tScreenBuffers,
 					(const UBYTE *)pacman_tiles_mask, mapping_stage_0001);
 
-	while (!MouseLeft())
+	while (TRUE)
 	{
 		// 1. Process Input & Logic
 		if (!processInputs())
