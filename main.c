@@ -164,36 +164,6 @@ static void teardownEnvironment(void)
 	}
 }
 
-static void setupBuffers(void)
-{
-	// 1. Create PLANAR screen buffers safely using ACE (BMF_DISPLAYABLE forces CHIP RAM)
-	tScreenBuffers[0] = bitmapCreate(320, 256, 5, BMF_CLEAR | BMF_DISPLAYABLE);
-	tScreenBuffers[1] = bitmapCreate(320, 256, 5, BMF_CLEAR | BMF_DISPLAYABLE);
-
-	// 2. Wrap the INCBIN planar tile data directly in a tBitMap (no memory copy needed!)
-	tPacmanTiles = (tBitMap *)AllocMem(sizeof(tBitMap), MEMF_PUBLIC | MEMF_CLEAR);
-	InitBitMap((struct BitMap *)tPacmanTiles, 5, 320, 320); // Assumes tileset is 320x320
-	for (int p = 0; p < 5; p++)
-	{
-		tPacmanTiles->Planes[p] = (PLANEPTR)(pacman_tiles + p * (320 / 8) * 320);
-	}
-
-	// 3. Wrap the background image data in a tBitMap
-	tBackground = (tBitMap *)AllocMem(sizeof(tBitMap), MEMF_PUBLIC | MEMF_CLEAR);
-	InitBitMap((struct BitMap *)tBackground, 5, 320, 256);
-	for (int p = 0; p < 5; p++)
-	{
-		tBackground->Planes[p] = (PLANEPTR)(pacman_stage_01 + p * (320 / 8) * 256);
-	}
-
-	// Copy the background into the screen buffer initially
-	for (int p = 0; p < 5; p++)
-	{
-		CopyMem(tBackground->Planes[p], tScreenBuffers[0]->Planes[p], (320 / 8) * 256);
-		CopyMem(tBackground->Planes[p], tScreenBuffers[1]->Planes[p], (320 / 8) * 256);
-	}
-}
-
 static int processInputs(void)
 {
 	static UBYTE prevSpaceState = 0;
@@ -563,7 +533,12 @@ int main()
 	warpmode(0);
 	WaitVbl();
 
-	setupBuffers();
+	if (setupBuffers(tScreenBuffers, &tPacmanTiles, &tBackground, pacman_tiles, pacman_stage_01) != 0)
+	{
+		KPrintF("Failed to setup buffers\n");
+		return 0;
+	}
+
 	USHORT *copper;
 	if (setupCopper(&copper, tScreenBuffers[0], custom, (const USHORT *)colors, &bplPtrsInCopper) != 0)
 	{

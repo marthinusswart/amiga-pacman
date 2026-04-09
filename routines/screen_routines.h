@@ -5,6 +5,7 @@
 #include <proto/exec.h>
 #include <exec/execbase.h>
 #include <hardware/custom.h>
+#include <ace/utils/bitmap.h>
 #include "support/gcc8_c_support.h"
 
 // Entity IDs for double buffering history trackers
@@ -30,6 +31,8 @@ void WaitLine(USHORT line);
 void WaitBlt(void);
 
 short screenScanDefault(USHORT **copListEnd_out);
+int setupBuffers(tBitMap **screenBuffers, tBitMap **pacmanTiles, tBitMap **background,
+				 const UBYTE *tileData, const UBYTE *backgroundData);
 // Calculates the X and Y pixel coordinates of a sprite within a tileset
 void calculateSpriteLocation(int row, int col, int spriteWidth, int spriteHeight, int tilesetWidth, int tilesetHeight, int *spriteX, int *spriteY);
 BOOL isValidSpriteLocation(int x, int y, int spriteWidth, int spriteHeight, int screenWidth, int screenHeight);
