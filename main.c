@@ -27,6 +27,7 @@
 #include "ghost/ghost.h"
 #include "routines/state_routines.h"
 #include "state/state_ext.h"
+#include "routines/file_routines.h"
 
 // config
 #define MUSIC_OFF
@@ -41,6 +42,7 @@
 
 // forward declarations
 static void resetGameState(void);
+static int loadStageToBackground(int stageNumber);
 
 struct ExecBase *SysBase;
 volatile struct Custom *custom;
@@ -82,7 +84,10 @@ volatile short frameCounter = 0;
 INCBIN(colors, "pal/pacman_tiles.pal")
 INCBIN_CHIP(pacman_tiles, "bpl/pacman_tiles.bpl")
 INCBIN_CHIP(pacman_tiles_mask, "bpl/pacman_tiles_mask.bpl")
-INCBIN_CHIP(pacman_stage_01, "bpl/stage-0001.bpl")
+
+// Dynamic stage loading
+static void *pacman_stage = NULL;
+static ULONG pacman_stage_size = 0;
 
 static void vblankHandler(volatile struct Custom *pCustom, volatile void *pData)
 {
@@ -138,6 +143,8 @@ static void teardownEnvironment(void)
 		FreeMem(tPacmanTiles, sizeof(tBitMap));
 	if (tBackground)
 		FreeMem(tBackground, sizeof(tBitMap));
+	if (pacman_stage)
+		freeChipMem(pacman_stage, pacman_stage_size);
 
 	systemDestroy();
 
@@ -357,6 +364,23 @@ static void setupSprites(void)
 	setupPellets(&pellet);
 }
 
+static void loadNewStage(int stageNumber)
+{
+	/* Enable Later */
+	// if (loadStageToBackground(stageNumber) != 0)
+	// {
+	// 	DEBUG_PRINT("Failed to load stage %ld\n", (LONG)stageNumber);
+	// 	return;
+	// }
+
+	// addPowerPillsToMap(powerPill, tBackground, tPacmanTiles, tScreenBuffers,
+	// 				   (const UBYTE *)pacman_tiles_mask, pacman_stage);
+	// addPelletsToMap(pellet, pelletsOnMap, tBackground, tPacmanTiles, tScreenBuffers,
+	// 				(const UBYTE *)pacman_tiles_mask, pacman_stage);
+
+	updateSpriteMaps(pacman, blueGhost, redGhost, pinkGhost, orangeGhost, (const UBYTE *)mapping_stage_0001);
+}
+
 static int initializePositionTrackers(Position positions[][2], Ghost *blue, Ghost *red,
 									  Ghost *pink, Ghost *orange, Pacman *pacman)
 {
@@ -381,6 +405,36 @@ static int initializePositionTrackers(Position positions[][2], Ghost *blue, Ghos
 	return 0;
 }
 
+static int loadStageToBackground(int stageNumber)
+{
+	const char *stagePath;
+
+	DEBUG_PRINT("Loading stage %ld\n", (LONG)stageNumber);
+
+	switch (stageNumber)
+	{
+	case 1:
+		stagePath = "bpl/stage-0001.bpl";
+		break;
+	default:
+		DEBUG_PRINT("Invalid stage number: %ld\n", (LONG)stageNumber);
+		return -1;
+	}
+
+	DEBUG_PRINT("Loading stage from: %s\n", stagePath);
+
+	pacman_stage_size = loadFileToChipMem(stagePath, &pacman_stage);
+
+	if (pacman_stage_size == 0)
+	{
+		DEBUG_PRINT("Failed to load stage %ld\n", (LONG)stageNumber);
+		return -1;
+	}
+
+	DEBUG_PRINT("Stage loaded successfully, size: %ld bytes\n", (LONG)pacman_stage_size);
+	return 0;
+}
+
 int main()
 {
 	setupEnvironment();
@@ -392,9 +446,18 @@ int main()
 	warpmode(0);
 	WaitVbl();
 
-	if (setupBuffers(tScreenBuffers, &tPacmanTiles, &tBackground, pacman_tiles, pacman_stage_01) != 0)
+	// Load stage data from disk
+	if (loadStageToBackground(1) != 0)
+	{
+		DEBUG_PRINT("Failed to load stage\n");
+		teardownEnvironment();
+		return 0;
+	}
+
+	if (setupBuffers(tScreenBuffers, &tPacmanTiles, &tBackground, pacman_tiles, pacman_stage) != 0)
 	{
 		DEBUG_PRINT("Failed to setup buffers\n");
+		teardownEnvironment();
 		return 0;
 	}
 
@@ -402,11 +465,13 @@ int main()
 	if (setupCopper(&copper, tScreenBuffers[0], custom, (const USHORT *)colors, &bplPtrsInCopper) != 0)
 	{
 		DEBUG_PRINT("Failed to setup copper\n");
+		teardownEnvironment();
 		return 0;
 	}
 	initializeGameState();
 
 	setupSprites();
+	loadNewStage(1);
 
 	// Initialize double buffering history trackers
 	initializePositionTrackers(lastPosition, blueGhost, redGhost, pinkGhost, orangeGhost, pacman);
