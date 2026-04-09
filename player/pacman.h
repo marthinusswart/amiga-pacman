@@ -32,7 +32,7 @@ typedef struct Pacman
 
     // Function pointer to emulate a method call
     void (*movePacman)(struct Pacman *p, Direction dir);
-    void (*addSprite)(struct Pacman *p, Direction dir, int spriteX, int spriteY, int width, int height);
+    void (*addSprite)(struct Pacman *p, Direction dir, int spriteX, int spriteY, int width, int height, const UBYTE *spriteTileData);
     short (*getSprite)(struct Pacman *p, Direction dir, Sprite **sprite_out);
     void (*setMap)(struct Pacman *p, UBYTE *map);
     int (*isPacmanColliding)(struct Pacman *p, struct Ghost *redGhost, struct Ghost *blueGhost, struct Ghost *pinkGhost, struct Ghost *orangeGhost);

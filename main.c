@@ -22,12 +22,14 @@
 #include "routines/collision_routines.h"
 #include "routines/pathfinding_routines.h"
 #include "routines/sprite_routines.h"
+#include "routines/memory_routines.h" // For pacman_tiles2
 #include "routines/render_routines.h"
 #include "player/pacman.h"
 #include "ghost/ghost.h"
 #include "routines/state_routines.h"
 #include "state/state_ext.h"
 #include "routines/file_routines.h"
+#include "routines/alphanumeric_routines.h"
 
 // config
 #define MUSIC_OFF
@@ -69,17 +71,21 @@ volatile struct Custom *custom;
 struct DosLibrary *DOSBase;
 struct GfxBase *GfxBase;
 
-/*   Game Sprites   */
+/* ------------ Game Sprites ---------- */
 Pacman *pacman;
 Ghost *blueGhost;
 Ghost *redGhost;
 Ghost *pinkGhost;
 Ghost *orangeGhost;
-Sprite *startText;
-Sprite *gameOverText;
 Sprite *powerPill;
 Sprite *pellet;
-/****************** */
+/* ------------ Game Sprites ---------- */
+
+/* ------------ Text Sprites ---------- */
+Sprite *startText;
+Sprite *gameOverText;
+Sprite *numericSprites[10]; // Array for numeric sprites
+/* ------------ Text Sprites ---------- */
 
 // backup
 UWORD SystemInts;
@@ -95,18 +101,21 @@ USHORT *bplPtrsInCopper = NULL;
 int frontBufferIdx = 0;
 int backBufferIdx = 1;
 tBitMap *tPacmanTiles = NULL;
+tBitMap *tAlphanumericTiles = NULL;
 tBitMap *tBackground = NULL;
 
 // Double buffering history trackers. Array index 0 tracks Buffer 0, index 1 tracks Buffer 1.
 static Position lastPosition[NUM_ENTITIES][2];
-
 static UBYTE pelletsOnMap[320];
+static int currentScore = 0;
 
 // DEMO - INCBIN
 volatile short frameCounter = 0;
 INCBIN(colors, "pal/pacman_tiles.pal")
 INCBIN_CHIP(pacman_tiles, "bpl/pacman_tiles.bpl")
 INCBIN_CHIP(pacman_tiles_mask, "bpl/pacman_tiles_mask.bpl")
+INCBIN_CHIP(alphanumeric_tiles, "bpl/alphanumeric.bpl")
+INCBIN_CHIP(alphanumeric_tiles_mask, "bpl/alphanumeric_mask.bpl")
 
 // Dynamic stage loading
 static void *pacman_stage = NULL;
@@ -162,6 +171,8 @@ static void teardownEnvironment(void)
 		bitmapDestroy(tScreenBuffers[0]);
 	if (tScreenBuffers[1])
 		bitmapDestroy(tScreenBuffers[1]);
+	if (tAlphanumericTiles)
+		FreeMem(tAlphanumericTiles, sizeof(tBitMap));
 	if (tPacmanTiles)
 		FreeMem(tPacmanTiles, sizeof(tBitMap));
 	if (tBackground)
@@ -364,7 +375,6 @@ static void updatePellets(Pacman *pacman, UBYTE *pelletsOnMap, tBitMap *tBackgro
 		int tileIndex = tileRow * 20 + tileCol;
 
 		pelletsOnMap[tileIndex] = 0;
-		DEBUG_PRINT("Pellet picked up!\n");
 
 		int tileX = tileCol * 16;
 		int tileY = tileRow * 16;
@@ -376,15 +386,16 @@ static void updatePellets(Pacman *pacman, UBYTE *pelletsOnMap, tBitMap *tBackgro
 
 static void setupSprites(void)
 {
-	setupPacman(&pacman);
-	setupBlueGhost(&blueGhost);
-	setupRedGhost(&redGhost);
-	setupPinkGhost(&pinkGhost);
-	setupOrangeGhost(&orangeGhost);
-	setupStartText(&startText);
-	setupGameOverText(&gameOverText);
-	setupPowerPill(&powerPill);
-	setupPellets(&pellet);
+	setupPacman(&pacman, (const UBYTE *)pacman_tiles);
+	setupBlueGhost(&blueGhost, (const UBYTE *)pacman_tiles);
+	setupRedGhost(&redGhost, (const UBYTE *)pacman_tiles);
+	setupPinkGhost(&pinkGhost, (const UBYTE *)pacman_tiles);
+	setupOrangeGhost(&orangeGhost, (const UBYTE *)pacman_tiles);
+	setupStartText(&startText, (const UBYTE *)pacman_tiles);
+	setupGameOverText(&gameOverText, (const UBYTE *)pacman_tiles);
+	setupPowerPill(&powerPill, (const UBYTE *)pacman_tiles);
+	setupPellets(&pellet, (const UBYTE *)pacman_tiles);
+	setupNumbers(numericSprites, (const UBYTE *)alphanumeric_tiles);
 }
 
 static void loadNewStage(int stageNumber)
@@ -477,7 +488,7 @@ int main()
 		return 0;
 	}
 
-	if (setupBuffers(tScreenBuffers, &tPacmanTiles, &tBackground, pacman_tiles, pacman_stage) != 0)
+	if (setupBuffers(tScreenBuffers, &tPacmanTiles, &tAlphanumericTiles, &tBackground, pacman_tiles, alphanumeric_tiles, pacman_stage) != 0)
 	{
 		DEBUG_PRINT("Failed to setup buffers\n");
 		teardownEnvironment();
@@ -551,7 +562,11 @@ int main()
 				   lastPosition, backBufferIdx, tPacmanTiles, tScreenBuffers[backBufferIdx],
 				   (const UBYTE *)pacman_tiles_mask);
 
-		// 6. Wait for VBlank and swap buffers
+		// 5a. Update Score
+
+		displayScore(currentScore, 32, 16, tAlphanumericTiles,
+					 tScreenBuffers[backBufferIdx],
+					 (const UBYTE *)alphanumeric_tiles_mask, numericSprites);
 		// ==========================================
 		// SWAP PHASE: Wait for VBlank, then swap buffers
 		// ==========================================
@@ -561,7 +576,6 @@ int main()
 		// 7. Check for collisions between Pacman and the ghosts
 		if (pacman->isPacmanColliding(pacman, redGhost, blueGhost, pinkGhost, orangeGhost))
 		{
-			DEBUG_PRINT("Pacman collided with a ghost!\n");
 			setGameOverState();
 		}
 

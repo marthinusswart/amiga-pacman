@@ -111,61 +111,71 @@ BOOL isValidSpriteLocation(int x, int y, int spriteWidth, int spriteHeight, int 
     return (x >= 0) && (y >= 0) && (x + spriteWidth <= screenWidth) && (y + spriteHeight <= screenHeight);
 }
 
-int setupBuffers(tBitMap **screenBuffers, tBitMap **pacmanTiles, tBitMap **background,
-				 const UBYTE *tileData, const UBYTE *backgroundData)
+int setupBuffers(tBitMap **screenBuffers, tBitMap **pacmanTiles, tBitMap **alphanumericTiles, tBitMap **background,
+                 const UBYTE *pacmanTileData, const UBYTE *alphanumericTileData, const UBYTE *backgroundData)
 {
-	// 1. Create PLANAR screen buffers safely using ACE (BMF_DISPLAYABLE forces CHIP RAM)
-	screenBuffers[0] = bitmapCreate(320, 256, 5, BMF_CLEAR | BMF_DISPLAYABLE);
-	screenBuffers[1] = bitmapCreate(320, 256, 5, BMF_CLEAR | BMF_DISPLAYABLE);
+    // 1. Create PLANAR screen buffers safely using ACE (BMF_DISPLAYABLE forces CHIP RAM)
+    screenBuffers[0] = bitmapCreate(320, 256, 5, BMF_CLEAR | BMF_DISPLAYABLE);
+    screenBuffers[1] = bitmapCreate(320, 256, 5, BMF_CLEAR | BMF_DISPLAYABLE);
 
-	if (!screenBuffers[0] || !screenBuffers[1])
-		return -1;
+    if (!screenBuffers[0] || !screenBuffers[1])
+        return -1;
 
-	// 2. Wrap the INCBIN planar tile data directly in a tBitMap (no memory copy needed!)
-	*pacmanTiles = (tBitMap *)AllocMem(sizeof(tBitMap), MEMF_PUBLIC | MEMF_CLEAR);
-	if (!*pacmanTiles)
-		return -1;
+    // 2. Wrap the INCBIN planar tile data directly in a tBitMap (no memory copy needed!)
+    *pacmanTiles = (tBitMap *)AllocMem(sizeof(tBitMap), MEMF_PUBLIC | MEMF_CLEAR);
+    if (!*pacmanTiles)
+        return -1;
 
-	InitBitMap((struct BitMap *)*pacmanTiles, 5, 320, 320); // Assumes tileset is 320x320
-	for (int p = 0; p < 5; p++)
-	{
-		(*pacmanTiles)->Planes[p] = (PLANEPTR)(tileData + p * (320 / 8) * 320);
-	}
+    InitBitMap((struct BitMap *)*pacmanTiles, 5, 320, 320); // Assumes pacman_tileset is 320x320
+    for (int p = 0; p < 5; p++)                             // 5 bitplanes
+    {
+        (*pacmanTiles)->Planes[p] = (PLANEPTR)(pacmanTileData + p * (320 / 8) * 320);
+    }
 
-	// 3. Wrap the background image data in a tBitMap
-	*background = (tBitMap *)AllocMem(sizeof(tBitMap), MEMF_PUBLIC | MEMF_CLEAR);
-	if (!*background)
-		return -1;
+    // 2a. Wrap the INCBIN planar alphanumeric tile data directly in a tBitMap
+    *alphanumericTiles = (tBitMap *)AllocMem(sizeof(tBitMap), MEMF_PUBLIC | MEMF_CLEAR);
+    if (!*alphanumericTiles)
+        return -1;
+    InitBitMap((struct BitMap *)*alphanumericTiles, 5, 160, 160); // Dimensions from alphanumeric_routines.c setupNumbers
+    for (int p = 0; p < 5; p++)                                   // 5 bitplanes
+    {
+        (*alphanumericTiles)->Planes[p] = (PLANEPTR)(alphanumericTileData + p * (160 / 8) * 160);
+    }
 
-	InitBitMap((struct BitMap *)*background, 5, 320, 256);
-	for (int p = 0; p < 5; p++)
-	{
-		(*background)->Planes[p] = (PLANEPTR)(backgroundData + p * (320 / 8) * 256);
-	}
+    // 3. Wrap the background image data in a tBitMap
+    *background = (tBitMap *)AllocMem(sizeof(tBitMap), MEMF_PUBLIC | MEMF_CLEAR);
+    if (!*background)
+        return -1;
 
-	// Copy the background into the screen buffer initially
-	for (int p = 0; p < 5; p++)
-	{
-		CopyMem((*background)->Planes[p], screenBuffers[0]->Planes[p], (320 / 8) * 256);
-		CopyMem((*background)->Planes[p], screenBuffers[1]->Planes[p], (320 / 8) * 256);
-	}
+    InitBitMap((struct BitMap *)*background, 5, 320, 256);
+    for (int p = 0; p < 5; p++)
+    {
+        (*background)->Planes[p] = (PLANEPTR)(backgroundData + p * (320 / 8) * 256);
+    }
 
-	return 0;
+    // Copy the background into the screen buffer initially
+    for (int p = 0; p < 5; p++)
+    {
+        CopyMem((*background)->Planes[p], screenBuffers[0]->Planes[p], (320 / 8) * 256);
+        CopyMem((*background)->Planes[p], screenBuffers[1]->Planes[p], (320 / 8) * 256);
+    }
+
+    return 0;
 }
 
 void doubleBufferUpdates(tBitMap **screenBuffers, int *frontBufferIdx_out,
-						 int *backBufferIdx_out, USHORT *bplPtrs)
+                         int *backBufferIdx_out, USHORT *bplPtrs)
 {
-	const UBYTE *planes[5];
-	for (int a = 0; a < 5; a++)
-	{
-		planes[a] = screenBuffers[*backBufferIdx_out]->Planes[a];
-	}
-	// Safely swap the bitplane pointers in the copper list
-	USHORT *tempBplPtr = bplPtrs;
-	copSetPlanes(0, &tempBplPtr, planes, 5);
+    const UBYTE *planes[5];
+    for (int a = 0; a < 5; a++)
+    {
+        planes[a] = screenBuffers[*backBufferIdx_out]->Planes[a];
+    }
+    // Safely swap the bitplane pointers in the copper list
+    USHORT *tempBplPtr = bplPtrs;
+    copSetPlanes(0, &tempBplPtr, planes, 5);
 
-	// Flip buffers for the next frame
-	*frontBufferIdx_out = *backBufferIdx_out;
-	*backBufferIdx_out = 1 - *frontBufferIdx_out;
+    // Flip buffers for the next frame
+    *frontBufferIdx_out = *backBufferIdx_out;
+    *backBufferIdx_out = 1 - *frontBufferIdx_out;
 }

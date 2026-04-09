@@ -2,7 +2,7 @@
 
 // Private forward declaration
 static void moveGhost(Ghost *g, Direction direction);
-static void addSprite(Ghost *g, Direction direction, int spriteX, int spriteY, int width, int height);
+static void addSprite(Ghost *g, Direction direction, int spriteX, int spriteY, int width, int height, const UBYTE *spriteTileData);
 static short getSprite(Ghost *g, Direction direction, Sprite **sprite_out);
 static void setMap(Ghost *g, UBYTE *map);
 
@@ -90,7 +90,7 @@ static void moveGhost(Ghost *g, Direction direction)
     }
 }
 
-static void addSprite(Ghost *g, Direction direction, int spriteX, int spriteY, int width, int height)
+static void addSprite(Ghost *g, Direction direction, int spriteX, int spriteY, int width, int height, const UBYTE *spriteTileData)
 {
     Sprite *sprite = NULL;
     switch (direction)
@@ -114,7 +114,7 @@ static void addSprite(Ghost *g, Direction direction, int spriteX, int spriteY, i
     sprite->y = spriteY;
     sprite->width = width;
     sprite->height = height;
-    sprite->spriteData = (const UBYTE *)pacman_tiles2; // Example: all sprites use the same data for now
+    sprite->spriteData = spriteTileData; // Example: all sprites use the same data for now
 }
 
 static short getSprite(Ghost *g, Direction direction, Sprite **sprite_out)

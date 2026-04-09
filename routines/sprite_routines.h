@@ -8,15 +8,17 @@
 #include "map/stages.h"
 #include "support/gcc8_c_support.h"
 
-short setupPacman(Pacman **pacman);
-short setupBlueGhost(Ghost **blueGhost);
-short setupRedGhost(Ghost **redGhost);
-short setupPinkGhost(Ghost **pinkGhost);
-short setupOrangeGhost(Ghost **orangeGhost);
-short setupStartText(Sprite **startText);
-short setupGameOverText(Sprite **gameOverText);
-short setupPowerPill(Sprite **powerPill);
-short setupPellets(Sprite **pellet);
+short setupPacman(Pacman **pacman, const UBYTE *spriteTileData);
+short setupBlueGhost(Ghost **blueGhost, const UBYTE *spriteTileData);
+short setupRedGhost(Ghost **redGhost, const UBYTE *spriteTileData);
+short setupPinkGhost(Ghost **pinkGhost, const UBYTE *spriteTileData);
+short setupOrangeGhost(Ghost **orangeGhost, const UBYTE *spriteTileData);
+short setupStartText(Sprite **startText, const UBYTE *spriteTileData);
+short setupGameOverText(Sprite **gameOverText, const UBYTE *spriteTileData);
+short setupPowerPill(Sprite **powerPill, const UBYTE *spriteTileData);
+short setupPellets(Sprite **pellet, const UBYTE *spriteTileData);
+short setupSprite(Sprite **sprite, const UBYTE *spriteTileData, int row, int col,
+				  int width, int height, int tilesetWidth, int tilesetHeight);
 
 int addPowerPillsToMap(Sprite *pill, tBitMap *background, tBitMap *pacmanTiles,
 					   tBitMap **screenBuffers, const UBYTE *tilesMask, const UBYTE *mapData);
@@ -26,6 +28,6 @@ int addPelletsToMap(Sprite *pellet, UBYTE *pelletsOnMap, tBitMap *background, tB
 void ghostUpdates(Pacman *pacman, Ghost *redGhost, Ghost *blueGhost, Ghost *pinkGhost, Ghost *orangeGhost);
 
 void updateSpriteMaps(Pacman *pacman, Ghost *blueGhost, Ghost *redGhost, Ghost *pinkGhost,
-                      Ghost *orangeGhost, const UBYTE *mapData);
+					  Ghost *orangeGhost, const UBYTE *mapData);
 
 #endif // SPRITE_ROUTINES_H
