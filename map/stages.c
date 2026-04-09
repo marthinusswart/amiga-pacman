@@ -53,3 +53,6 @@ UBYTE mapping_stage_0001[320] = {
     9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9
 };
 // clang-format on
+
+// Initialize currentStageMap to point to stage 1 by default
+const UBYTE *currentStageMap = mapping_stage_0001;

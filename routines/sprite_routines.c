@@ -248,6 +248,21 @@ void ghostUpdates(Pacman *pacman, Ghost *redGhost, Ghost *blueGhost, Ghost *pink
     orangeGhost->moveGhost(orangeGhost, orangeGhost->direction);
 }
 
+void updateSpriteMaps(Pacman *pacman, Ghost *blueGhost, Ghost *redGhost, Ghost *pinkGhost,
+                      Ghost *orangeGhost, const UBYTE *mapData)
+{
+    if (pacman && mapData)
+        pacman->setMap(pacman, mapData);
+    if (blueGhost && mapData)
+        blueGhost->setMap(blueGhost, mapData);
+    if (redGhost && mapData)
+        redGhost->setMap(redGhost, mapData);
+    if (pinkGhost && mapData)
+        pinkGhost->setMap(pinkGhost, mapData);
+    if (orangeGhost && mapData)
+        orangeGhost->setMap(orangeGhost, mapData);
+}
+
 int addPowerPillsToMap(Sprite *pill, tBitMap *background, tBitMap *pacmanTiles,
                        tBitMap **screenBuffers, const UBYTE *tilesMask, const UBYTE *mapData)
 {

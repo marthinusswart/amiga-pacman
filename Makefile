@@ -54,6 +54,12 @@ all: $(OUT).exe
 $(OUT).exe: $(OUT).elf
 	$(info Elf2Hunk $(program).exe)
 	@elf2hunk $(OUT).elf $(OUT).exe
+	$(info Copying bpl/ folder to out/)
+ifdef WINDOWS
+	@xcopy /E /I /Y bpl out\bpl >nul 2>&1
+else
+	@cp -r bpl out/
+endif
 
 $(OUT).elf: $(objects)
 	$(info Linking $(program).elf)

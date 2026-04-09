@@ -25,4 +25,7 @@ int addPelletsToMap(Sprite *pellet, UBYTE *pelletsOnMap, tBitMap *background, tB
 
 void ghostUpdates(Pacman *pacman, Ghost *redGhost, Ghost *blueGhost, Ghost *pinkGhost, Ghost *orangeGhost);
 
+void updateSpriteMaps(Pacman *pacman, Ghost *blueGhost, Ghost *redGhost, Ghost *pinkGhost,
+                      Ghost *orangeGhost, const UBYTE *mapData);
+
 #endif // SPRITE_ROUTINES_H
