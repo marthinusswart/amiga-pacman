@@ -40,14 +40,36 @@
 #define DEBUG_PRINT(fmt, ...) ((void)0)
 #endif
 
-// forward declarations
+/* forward declarations */
+static void vblankHandler(volatile struct Custom *pCustom, volatile void *pData);
+static void Wait10(void);
+static void Wait11(void);
+static void Wait12(void);
+static void Wait13(void);
+static void setupEnvironment(void);
+static void teardownEnvironment(void);
+static int processInputs(void);
+static void gameStartUpdates(void);
+static void setGameOverState(void);
 static void resetGameState(void);
+static void displayGameOverText(void);
+static void updatePellets(Pacman *pacman,
+						  UBYTE *pelletsOnMap, tBitMap *tBackground,
+						  tBitMap *frontBuffer, tBitMap *backBuffer);
+static void setupSprites(void);
+static void loadNewStage(int stageNumber);
+static int initializePositionTrackers(Position positions[][2],
+									  Ghost *blue, Ghost *red, Ghost *pink,
+									  Ghost *orange, Pacman *pacman);
 static int loadStageToBackground(int stageNumber);
+/********************** */
 
 struct ExecBase *SysBase;
 volatile struct Custom *custom;
 struct DosLibrary *DOSBase;
 struct GfxBase *GfxBase;
+
+/*   Game Sprites   */
 Pacman *pacman;
 Ghost *blueGhost;
 Ghost *redGhost;
@@ -57,6 +79,7 @@ Sprite *startText;
 Sprite *gameOverText;
 Sprite *powerPill;
 Sprite *pellet;
+/****************** */
 
 // backup
 UWORD SystemInts;
