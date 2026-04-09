@@ -32,8 +32,6 @@
 
 // forward declarations
 static void resetGameState(void);
-static int addPelletsToMap(Sprite *pellet, UBYTE *pelletsOnMap, tBitMap *background, tBitMap *pacmanTiles,
-						   tBitMap **screenBuffers, const UBYTE *tilesMask, const UBYTE *mapData);
 
 struct ExecBase *SysBase;
 volatile struct Custom *custom;
@@ -413,45 +411,6 @@ static void displayGameOverText(void)
 		tScreenBuffers[1], 108, 16,
 		gameOverText->width, gameOverText->height,
 		(const UBYTE *)pacman_tiles_mask);
-}
-
-static int addPelletsToMap(Sprite *pellet, UBYTE *pelletsOnMap, tBitMap *background, tBitMap *pacmanTiles,
-						   tBitMap **screenBuffers, const UBYTE *tilesMask, const UBYTE *mapData)
-{
-	if (!pellet || !pelletsOnMap || !background || !pacmanTiles || !screenBuffers || !tilesMask || !mapData)
-		return -1;
-
-	for (int i = 0; i < 320; i++)
-	{
-		pelletsOnMap[i] = 0;		// Clear pellet state
-		if (mapData[i] == 0) // 0 = Path (Pellet)
-		{
-			pelletsOnMap[i] = 1; // Mark pellet as present on the map
-			int tileX = (i % 20) * 16;
-			int tileY = (i / 20) * 16;
-
-			// Add to the permanent background
-			blitCopyMask(
-				pacmanTiles, pellet->x, pellet->y,
-				background, tileX, tileY,
-				pellet->width, pellet->height,
-				tilesMask);
-
-			// Add to the front and back screen buffers to make it immediately visible
-			blitCopyMask(
-				pacmanTiles, pellet->x, pellet->y,
-				screenBuffers[0], tileX, tileY,
-				pellet->width, pellet->height,
-				tilesMask);
-			blitCopyMask(
-				pacmanTiles, pellet->x, pellet->y,
-				screenBuffers[1], tileX, tileY,
-				pellet->width, pellet->height,
-				tilesMask);
-		}
-	}
-
-	return 0;
 }
 
 static void updatePellets(Pacman *pacman, UBYTE *pelletsOnMap, tBitMap *tBackground, tBitMap *frontBuffer, tBitMap *backBuffer)
