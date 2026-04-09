@@ -22,6 +22,7 @@
 #include "routines/collision_routines.h"
 #include "routines/pathfinding_routines.h"
 #include "routines/sprite_routines.h"
+#include "routines/render_routines.h"
 #include "player/pacman.h"
 #include "ghost/ghost.h"
 #include "routines/state_routines.h"
@@ -29,10 +30,17 @@
 
 // config
 #define MUSIC_OFF
+#define DEBUG_ON
+
+// Debug print macro
+#ifdef DEBUG_ON
+#define DEBUG_PRINT(fmt, ...) KPrintF(fmt, ##__VA_ARGS__)
+#else
+#define DEBUG_PRINT(fmt, ...) ((void)0)
+#endif
 
 // forward declarations
 static void resetGameState(void);
-static void addPelletsToMap(Sprite *pellet);
 
 struct ExecBase *SysBase;
 volatile struct Custom *custom;
@@ -99,7 +107,7 @@ static void setupEnvironment(void)
 	DOSBase = (struct DosLibrary *)OpenLibrary((CONST_STRPTR) "dos.library", 0);
 	GfxBase = (struct GfxBase *)OpenLibrary((CONST_STRPTR) "graphics.library", 0);
 
-	KPrintF("Hello debugger from Amiga!\n");
+	DEBUG_PRINT("Hello debugger from Amiga!\n");
 
 	if (DOSBase)
 	{
@@ -121,7 +129,7 @@ static void setupEnvironment(void)
 
 static void teardownEnvironment(void)
 {
-	KPrintF("Destroying System!\n");
+	DEBUG_PRINT("Destroying System!\n");
 	if (tScreenBuffers[0])
 		bitmapDestroy(tScreenBuffers[0]);
 	if (tScreenBuffers[1])
@@ -153,97 +161,15 @@ static void teardownEnvironment(void)
 
 	if (GfxBase)
 	{
-		KPrintF("free gfx library!\n");
+		DEBUG_PRINT("free gfx library!\n");
 		CloseLibrary((struct Library *)GfxBase);
 	}
 
 	if (DOSBase)
 	{
-		KPrintF("free dos library!\n");
+		DEBUG_PRINT("free dos library!\n");
 		CloseLibrary((struct Library *)DOSBase);
 	}
-}
-
-static void setupBuffers(void)
-{
-	// 1. Create PLANAR screen buffers safely using ACE (BMF_DISPLAYABLE forces CHIP RAM)
-	tScreenBuffers[0] = bitmapCreate(320, 256, 5, BMF_CLEAR | BMF_DISPLAYABLE);
-	tScreenBuffers[1] = bitmapCreate(320, 256, 5, BMF_CLEAR | BMF_DISPLAYABLE);
-
-	// 2. Wrap the INCBIN planar tile data directly in a tBitMap (no memory copy needed!)
-	tPacmanTiles = (tBitMap *)AllocMem(sizeof(tBitMap), MEMF_PUBLIC | MEMF_CLEAR);
-	InitBitMap((struct BitMap *)tPacmanTiles, 5, 320, 320); // Assumes tileset is 320x320
-	for (int p = 0; p < 5; p++)
-	{
-		tPacmanTiles->Planes[p] = (PLANEPTR)(pacman_tiles + p * (320 / 8) * 320);
-	}
-
-	// 3. Wrap the background image data in a tBitMap
-	tBackground = (tBitMap *)AllocMem(sizeof(tBitMap), MEMF_PUBLIC | MEMF_CLEAR);
-	InitBitMap((struct BitMap *)tBackground, 5, 320, 256);
-	for (int p = 0; p < 5; p++)
-	{
-		tBackground->Planes[p] = (PLANEPTR)(pacman_stage_01 + p * (320 / 8) * 256);
-	}
-
-	// Copy the background into the screen buffer initially
-	for (int p = 0; p < 5; p++)
-	{
-		CopyMem(tBackground->Planes[p], tScreenBuffers[0]->Planes[p], (320 / 8) * 256);
-		CopyMem(tBackground->Planes[p], tScreenBuffers[1]->Planes[p], (320 / 8) * 256);
-	}
-}
-
-static int setupCopper(USHORT **copper1_out, tBitMap *screenBuffer)
-{
-	if (!copper1_out || !screenBuffer)
-		return -1;
-
-	USHORT *copper1 = (USHORT *)AllocMem(1024, MEMF_CHIP);
-	if (!copper1)
-		return -1;
-
-	USHORT *copPtr = copper1;
-
-	screenScanDefault(&copPtr);
-
-	// enable bitplanes
-	*copPtr++ = offsetof(struct Custom, bplcon0);
-	*copPtr++ = (0 << 10) /*dual pf*/ | (1 << 9) /*color*/ | ((5) << 12) /*num bitplanes*/;
-	*copPtr++ = offsetof(struct Custom, bplcon1); // scrolling
-	*copPtr++ = 0;
-	*copPtr++ = offsetof(struct Custom, bplcon2); // playfied priority
-	*copPtr++ = 1 << 6;							  // 0x24;			//Sprites have priority over playfields
-
-	// set bitplane modulo for PLANAR
-	*copPtr++ = offsetof(struct Custom, bpl1mod); // odd planes   1,3,5
-	*copPtr++ = 0;
-	*copPtr++ = offsetof(struct Custom, bpl2mod); // even  planes 2,4
-	*copPtr++ = 0;
-
-	// set bitplane pointers
-	const UBYTE *planes[5];
-	for (int a = 0; a < 5; a++)
-	{
-		planes[a] = screenBuffer->Planes[a];
-	}
-	bplPtrsInCopper = copPtr;			 // Save this globally so we can update it in the main loop!
-	copSetPlanes(0, &copPtr, planes, 5); // INJECT pointers into copper list!
-
-	// set colors
-	for (int a = 0; a < 32; a++)
-		copSetColor(&copPtr, a, ((USHORT *)colors)[a]);
-
-	// end copper list
-	*copPtr++ = 0xffff;
-	*copPtr++ = 0xfffe;
-
-	custom->cop1lc = (ULONG)copper1;
-	custom->dmacon = DMAF_BLITTER; // disable blitter dma for copjmp bug
-	custom->copjmp1 = 0x7fff;	   // start coppper
-
-	*copper1_out = copper1;
-	return 0;
 }
 
 static int processInputs(void)
@@ -270,12 +196,12 @@ static int processInputs(void)
 	{
 		if (getGameState(GAME_OVER_TEXT) == ON)
 		{
-			KPrintF("Resetting game state!\n");
+			DEBUG_PRINT("Resetting game state!\n");
 			resetGameState();
 		}
 		else
 		{
-			KPrintF("Starting game state!\n");
+			DEBUG_PRINT("Starting game state!\n");
 			updateGameState(START_GAME_TEXT, OFF);
 			updateGameState(PLAYING_STATE, ON);
 		}
@@ -327,110 +253,6 @@ static void gameStartUpdates(void)
 	}
 }
 
-static void backgroundUpdates(void)
-{
-	blitCopy(tBackground, lastPosition[ORANGE][backBufferIdx].x, lastPosition[ORANGE][backBufferIdx].y,
-			 tScreenBuffers[backBufferIdx], lastPosition[ORANGE][backBufferIdx].x, lastPosition[ORANGE][backBufferIdx].y,
-			 orangeGhost->width, orangeGhost->height, MINTERM_COOKIE);
-
-	blitCopy(tBackground, lastPosition[BLUE][backBufferIdx].x, lastPosition[BLUE][backBufferIdx].y,
-			 tScreenBuffers[backBufferIdx], lastPosition[BLUE][backBufferIdx].x, lastPosition[BLUE][backBufferIdx].y,
-			 blueGhost->width, blueGhost->height, MINTERM_COOKIE);
-
-	blitCopy(tBackground, lastPosition[RED][backBufferIdx].x, lastPosition[RED][backBufferIdx].y,
-			 tScreenBuffers[backBufferIdx], lastPosition[RED][backBufferIdx].x, lastPosition[RED][backBufferIdx].y,
-			 redGhost->width, redGhost->height, MINTERM_COOKIE);
-
-	blitCopy(tBackground, lastPosition[PINK][backBufferIdx].x, lastPosition[PINK][backBufferIdx].y,
-			 tScreenBuffers[backBufferIdx], lastPosition[PINK][backBufferIdx].x, lastPosition[PINK][backBufferIdx].y,
-			 pinkGhost->width, pinkGhost->height, MINTERM_COOKIE);
-
-	blitCopy(tBackground, lastPosition[PACMAN][backBufferIdx].x, lastPosition[PACMAN][backBufferIdx].y,
-			 tScreenBuffers[backBufferIdx], lastPosition[PACMAN][backBufferIdx].x, lastPosition[PACMAN][backBufferIdx].y,
-			 pacman->width, pacman->height, MINTERM_COOKIE);
-}
-
-static void bobUpdates(void)
-{
-	Sprite *blueSprite = NULL;
-	blueGhost->getSprite(blueGhost, blueGhost->direction, &blueSprite);
-	Sprite *redSprite = NULL;
-	redGhost->getSprite(redGhost, redGhost->direction, &redSprite);
-	Sprite *pinkSprite = NULL;
-	pinkGhost->getSprite(pinkGhost, pinkGhost->direction, &pinkSprite);
-	Sprite *orangeSprite = NULL;
-	orangeGhost->getSprite(orangeGhost, orangeGhost->direction, &orangeSprite);
-	Sprite *pacSprite = NULL;
-	pacman->getSprite(pacman, pacman->direction, &pacSprite);
-
-	// Save the locations we are about to draw to, so we can erase them next time this buffer is active
-	lastPosition[BLUE][backBufferIdx].x = blueGhost->x;
-	lastPosition[BLUE][backBufferIdx].y = blueGhost->y;
-
-	lastPosition[RED][backBufferIdx].x = redGhost->x;
-	lastPosition[RED][backBufferIdx].y = redGhost->y;
-
-	lastPosition[PINK][backBufferIdx].x = pinkGhost->x;
-	lastPosition[PINK][backBufferIdx].y = pinkGhost->y;
-
-	lastPosition[ORANGE][backBufferIdx].x = orangeGhost->x;
-	lastPosition[ORANGE][backBufferIdx].y = orangeGhost->y;
-
-	lastPosition[PACMAN][backBufferIdx].x = pacman->x;
-	lastPosition[PACMAN][backBufferIdx].y = pacman->y;
-
-	if (orangeSprite)
-		blitCopyMask(
-			tPacmanTiles, orangeSprite->x, orangeSprite->y,
-			tScreenBuffers[backBufferIdx], orangeGhost->x, orangeGhost->y,
-			orangeGhost->width, orangeGhost->height,
-			(const UBYTE *)pacman_tiles_mask);
-
-	if (blueSprite)
-		blitCopyMask(
-			tPacmanTiles, blueSprite->x, blueSprite->y,
-			tScreenBuffers[backBufferIdx], blueGhost->x, blueGhost->y,
-			blueGhost->width, blueGhost->height,
-			(const UBYTE *)pacman_tiles_mask);
-
-	if (redSprite)
-		blitCopyMask(
-			tPacmanTiles, redSprite->x, redSprite->y,
-			tScreenBuffers[backBufferIdx], redGhost->x, redGhost->y,
-			redGhost->width, redGhost->height,
-			(const UBYTE *)pacman_tiles_mask);
-
-	if (pinkSprite)
-		blitCopyMask(
-			tPacmanTiles, pinkSprite->x, pinkSprite->y,
-			tScreenBuffers[backBufferIdx], pinkGhost->x, pinkGhost->y,
-			pinkGhost->width, pinkGhost->height,
-			(const UBYTE *)pacman_tiles_mask);
-
-	if (pacSprite)
-		blitCopyMask(
-			tPacmanTiles, pacSprite->x, pacSprite->y,
-			tScreenBuffers[backBufferIdx], pacman->x, pacman->y,
-			pacman->width, pacman->height,
-			(const UBYTE *)pacman_tiles_mask);
-}
-
-static void doubleBufferUpdates(void)
-{
-	const UBYTE *planes[5];
-	for (int a = 0; a < 5; a++)
-	{
-		planes[a] = tScreenBuffers[backBufferIdx]->Planes[a];
-	}
-	// Safely swap the bitplane pointers in the copper list
-	USHORT *tempBplPtr = bplPtrsInCopper;
-	copSetPlanes(0, &tempBplPtr, planes, 5);
-
-	// Flip buffers for the next frame
-	frontBufferIdx = backBufferIdx;
-	backBufferIdx = 1 - frontBufferIdx;
-}
-
 static void setGameOverState(void)
 {
 	updateGameState(START_GAME_TEXT, OFF);
@@ -472,7 +294,8 @@ static void resetGameState(void)
 		orangeGhost->direction = RIGHT;
 	}
 
-	addPelletsToMap(pellet);
+	addPelletsToMap(pellet, pelletsOnMap, tBackground, tPacmanTiles, tScreenBuffers,
+					(const UBYTE *)pacman_tiles_mask, mapping_stage_0001);
 
 	updateGameState(START_GAME_TEXT, ON);
 	updateGameState(CLEARED_START_TEXT, OFF);
@@ -495,76 +318,6 @@ static void displayGameOverText(void)
 		(const UBYTE *)pacman_tiles_mask);
 }
 
-static void addPowerPillsToMap(Sprite *pill)
-{
-	if (!pill || !tBackground || !tPacmanTiles)
-		return;
-
-	for (int i = 0; i < 320; i++)
-	{
-		if (mapping_stage_0001[i] == 2) // 2 = Power Pill
-		{
-			int tileX = (i % 20) * 16;
-			int tileY = (i / 20) * 16;
-
-			// Add to the permanent background
-			blitCopyMask(
-				tPacmanTiles, pill->x, pill->y,
-				tBackground, tileX, tileY,
-				pill->width, pill->height,
-				(const UBYTE *)pacman_tiles_mask);
-
-			// Add to the front and back screen buffers to make it immediately visible
-			blitCopyMask(
-				tPacmanTiles, pill->x, pill->y,
-				tScreenBuffers[0], tileX, tileY,
-				pill->width, pill->height,
-				(const UBYTE *)pacman_tiles_mask);
-			blitCopyMask(
-				tPacmanTiles, pill->x, pill->y,
-				tScreenBuffers[1], tileX, tileY,
-				pill->width, pill->height,
-				(const UBYTE *)pacman_tiles_mask);
-		}
-	}
-}
-
-static void addPelletsToMap(Sprite *pellet)
-{
-	if (!pellet || !tBackground || !tPacmanTiles)
-		return;
-
-	for (int i = 0; i < 320; i++)
-	{
-		pelletsOnMap[i] = 0;			// Clear pellet state
-		if (mapping_stage_0001[i] == 0) // 0 = Path (Pellet)
-		{
-			pelletsOnMap[i] = 1; // Mark pellet as present on the map
-			int tileX = (i % 20) * 16;
-			int tileY = (i / 20) * 16;
-
-			// Add to the permanent background
-			blitCopyMask(
-				tPacmanTiles, pellet->x, pellet->y,
-				tBackground, tileX, tileY,
-				pellet->width, pellet->height,
-				(const UBYTE *)pacman_tiles_mask);
-
-			// Add to the front and back screen buffers to make it immediately visible
-			blitCopyMask(
-				tPacmanTiles, pellet->x, pellet->y,
-				tScreenBuffers[0], tileX, tileY,
-				pellet->width, pellet->height,
-				(const UBYTE *)pacman_tiles_mask);
-			blitCopyMask(
-				tPacmanTiles, pellet->x, pellet->y,
-				tScreenBuffers[1], tileX, tileY,
-				pellet->width, pellet->height,
-				(const UBYTE *)pacman_tiles_mask);
-		}
-	}
-}
-
 static void updatePellets(Pacman *pacman, UBYTE *pelletsOnMap, tBitMap *tBackground, tBitMap *frontBuffer, tBitMap *backBuffer)
 {
 	if (!pacman || !pelletsOnMap || !tBackground || !frontBuffer || !backBuffer)
@@ -581,7 +334,7 @@ static void updatePellets(Pacman *pacman, UBYTE *pelletsOnMap, tBitMap *tBackgro
 		int tileIndex = tileRow * 20 + tileCol;
 
 		pelletsOnMap[tileIndex] = 0;
-		KPrintF("Pellet picked up!\n");
+		DEBUG_PRINT("Pellet picked up!\n");
 
 		int tileX = tileCol * 16;
 		int tileY = tileRow * 16;
@@ -604,22 +357,51 @@ static void setupSprites(void)
 	setupPellets(&pellet);
 }
 
+static int initializePositionTrackers(Position positions[][2], Ghost *blue, Ghost *red,
+									  Ghost *pink, Ghost *orange, Pacman *pacman)
+{
+	if (!positions || !blue || !red || !pink || !orange || !pacman)
+		return -1;
+
+	positions[BLUE][0].x = positions[BLUE][1].x = blue->x;
+	positions[BLUE][0].y = positions[BLUE][1].y = blue->y;
+
+	positions[RED][0].x = positions[RED][1].x = red->x;
+	positions[RED][0].y = positions[RED][1].y = red->y;
+
+	positions[PINK][0].x = positions[PINK][1].x = pink->x;
+	positions[PINK][0].y = positions[PINK][1].y = pink->y;
+
+	positions[ORANGE][0].x = positions[ORANGE][1].x = orange->x;
+	positions[ORANGE][0].y = positions[ORANGE][1].y = orange->y;
+
+	positions[PACMAN][0].x = positions[PACMAN][1].x = pacman->x;
+	positions[PACMAN][0].y = positions[PACMAN][1].y = pacman->y;
+
+	return 0;
+}
+
 int main()
 {
 	setupEnvironment();
 	// TODO: precalc stuff here
 #ifdef MUSIC
 	if (p61Init(module) != 0)
-		KPrintF("p61Init failed!\n");
+		DEBUG_PRINT("p61Init failed!\n");
 #endif
 	warpmode(0);
 	WaitVbl();
 
-	setupBuffers();
-	USHORT *copper1;
-	if (setupCopper(&copper1, tScreenBuffers[0]) != 0)
+	if (setupBuffers(tScreenBuffers, &tPacmanTiles, &tBackground, pacman_tiles, pacman_stage_01) != 0)
 	{
-		KPrintF("Failed to setup copper\n");
+		DEBUG_PRINT("Failed to setup buffers\n");
+		return 0;
+	}
+
+	USHORT *copper;
+	if (setupCopper(&copper, tScreenBuffers[0], custom, (const USHORT *)colors, &bplPtrsInCopper) != 0)
+	{
+		DEBUG_PRINT("Failed to setup copper\n");
 		return 0;
 	}
 	initializeGameState();
@@ -627,20 +409,7 @@ int main()
 	setupSprites();
 
 	// Initialize double buffering history trackers
-	lastPosition[BLUE][0].x = lastPosition[BLUE][1].x = blueGhost->x;
-	lastPosition[BLUE][0].y = lastPosition[BLUE][1].y = blueGhost->y;
-
-	lastPosition[RED][0].x = lastPosition[RED][1].x = redGhost->x;
-	lastPosition[RED][0].y = lastPosition[RED][1].y = redGhost->y;
-
-	lastPosition[PINK][0].x = lastPosition[PINK][1].x = pinkGhost->x;
-	lastPosition[PINK][0].y = lastPosition[PINK][1].y = pinkGhost->y;
-
-	lastPosition[ORANGE][0].x = lastPosition[ORANGE][1].x = orangeGhost->x;
-	lastPosition[ORANGE][0].y = lastPosition[ORANGE][1].y = orangeGhost->y;
-
-	lastPosition[PACMAN][0].x = lastPosition[PACMAN][1].x = pacman->x;
-	lastPosition[PACMAN][0].y = lastPosition[PACMAN][1].y = pacman->y;
+	initializePositionTrackers(lastPosition, blueGhost, redGhost, pinkGhost, orangeGhost, pacman);
 
 	systemSetDmaMask(DMAF_MASTER | DMAF_RASTER | DMAF_COPPER | DMAF_BLITTER, 1); // Tell ACE to enable DMA
 
@@ -652,10 +421,12 @@ int main()
 	updateGameState(PLAYING_STATE, OFF);
 	updateGameState(GAME_OVER_TEXT, OFF);
 
-	addPowerPillsToMap(powerPill);
-	addPelletsToMap(pellet);
+	addPowerPillsToMap(powerPill, tBackground, tPacmanTiles, tScreenBuffers,
+					   (const UBYTE *)pacman_tiles_mask, mapping_stage_0001);
+	addPelletsToMap(pellet, pelletsOnMap, tBackground, tPacmanTiles, tScreenBuffers,
+					(const UBYTE *)pacman_tiles_mask, mapping_stage_0001);
 
-	while (!MouseLeft())
+	while (TRUE)
 	{
 		// 1. Process Input & Logic
 		if (!processInputs())
@@ -680,25 +451,28 @@ int main()
 		// ==========================================
 		// CLEAR PHASE: Restore backgrounds for ALL objects
 		// ==========================================
-		backgroundUpdates();
+		backgroundUpdates(tBackground, lastPosition, backBufferIdx, tScreenBuffers[backBufferIdx],
+						  orangeGhost, blueGhost, redGhost, pinkGhost, pacman);
 
 		// 5. Draw ALL objects in their new positions
 		// ==========================================
 		// DRAW PHASE: Draw ALL objects on the screen
 		// ==========================================
-		bobUpdates();
+		bobUpdates(blueGhost, redGhost, pinkGhost, orangeGhost, pacman,
+				   lastPosition, backBufferIdx, tPacmanTiles, tScreenBuffers[backBufferIdx],
+				   (const UBYTE *)pacman_tiles_mask);
 
 		// 6. Wait for VBlank and swap buffers
 		// ==========================================
 		// SWAP PHASE: Wait for VBlank, then swap buffers
 		// ==========================================
 		WaitVbl();
-		doubleBufferUpdates();
+		doubleBufferUpdates(tScreenBuffers, &frontBufferIdx, &backBufferIdx, bplPtrsInCopper);
 
 		// 7. Check for collisions between Pacman and the ghosts
 		if (pacman->isPacmanColliding(pacman, redGhost, blueGhost, pinkGhost, orangeGhost))
 		{
-			KPrintF("Pacman collided with a ghost!\n");
+			DEBUG_PRINT("Pacman collided with a ghost!\n");
 			setGameOverState();
 		}
 
@@ -711,20 +485,20 @@ int main()
 		keyProcess(); // Process pending keystrokes from the CIA interrupt buffer
 	}
 
-	KPrintF("Exit Loop!\n");
+	DEBUG_PRINT("Exit Loop!\n");
 	keyDestroy();
 
 	// Clean up custom interrupt before waking up the OS
 	// Otherwise the hardware will call it after the program has exited!
-	KPrintF("Reset Interrupt!\n");
+	DEBUG_PRINT("Reset Interrupt!\n");
 	systemSetInt(INTB_VERTB, 0, 0);
 	WaitVbl(); // Wait 1 frame to guarantee the handler is fully finished
 
-	KPrintF("Free Copper List!\n");
-	FreeMem(copper1, 1024);
+	DEBUG_PRINT("Free Copper List!\n");
+	FreeMem(copper, 1024);
 
 #ifdef MUSIC
-	KPrintF("End Music!\n");
+	DEBUG_PRINT("End Music!\n");
 	p61End(); // End the music player safely BEFORE waking up the OS!
 #endif
 
