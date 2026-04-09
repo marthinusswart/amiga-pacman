@@ -1,4 +1,5 @@
 #include "screen_routines.h"
+#include "copper_routines.h"
 #include <proto/graphics.h>
 #include <graphics/gfx.h>
 
@@ -150,4 +151,21 @@ int setupBuffers(tBitMap **screenBuffers, tBitMap **pacmanTiles, tBitMap **backg
 	}
 
 	return 0;
+}
+
+void doubleBufferUpdates(tBitMap **screenBuffers, int *frontBufferIdx_out,
+						 int *backBufferIdx_out, USHORT *bplPtrs)
+{
+	const UBYTE *planes[5];
+	for (int a = 0; a < 5; a++)
+	{
+		planes[a] = screenBuffers[*backBufferIdx_out]->Planes[a];
+	}
+	// Safely swap the bitplane pointers in the copper list
+	USHORT *tempBplPtr = bplPtrs;
+	copSetPlanes(0, &tempBplPtr, planes, 5);
+
+	// Flip buffers for the next frame
+	*frontBufferIdx_out = *backBufferIdx_out;
+	*backBufferIdx_out = 1 - *frontBufferIdx_out;
 }

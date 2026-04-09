@@ -253,22 +253,6 @@ static void gameStartUpdates(void)
 	}
 }
 
-static void doubleBufferUpdates(void)
-{
-	const UBYTE *planes[5];
-	for (int a = 0; a < 5; a++)
-	{
-		planes[a] = tScreenBuffers[backBufferIdx]->Planes[a];
-	}
-	// Safely swap the bitplane pointers in the copper list
-	USHORT *tempBplPtr = bplPtrsInCopper;
-	copSetPlanes(0, &tempBplPtr, planes, 5);
-
-	// Flip buffers for the next frame
-	frontBufferIdx = backBufferIdx;
-	backBufferIdx = 1 - frontBufferIdx;
-}
-
 static void setGameOverState(void)
 {
 	updateGameState(START_GAME_TEXT, OFF);
@@ -472,7 +456,7 @@ int main()
 		// SWAP PHASE: Wait for VBlank, then swap buffers
 		// ==========================================
 		WaitVbl();
-		doubleBufferUpdates();
+		doubleBufferUpdates(tScreenBuffers, &frontBufferIdx, &backBufferIdx, bplPtrsInCopper);
 
 		// 7. Check for collisions between Pacman and the ghosts
 		if (pacman->isPacmanColliding(pacman, redGhost, blueGhost, pinkGhost, orangeGhost))
