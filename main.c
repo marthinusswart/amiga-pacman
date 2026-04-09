@@ -335,6 +335,8 @@ static void resetGameState(void)
 		orangeGhost->direction = RIGHT;
 	}
 
+	currentScore = 0;
+
 	addPelletsToMap(pellet, pelletsOnMap, tBackground, tPacmanTiles, tScreenBuffers,
 					(const UBYTE *)pacman_tiles_mask, currentStageMap);
 
@@ -375,6 +377,7 @@ static void updatePellets(Pacman *pacman, UBYTE *pelletsOnMap, tBitMap *tBackgro
 		int tileIndex = tileRow * 20 + tileCol;
 
 		pelletsOnMap[tileIndex] = 0;
+		currentScore += 1;
 
 		int tileX = tileCol * 16;
 		int tileY = tileRow * 16;
@@ -563,7 +566,6 @@ int main()
 				   (const UBYTE *)pacman_tiles_mask);
 
 		// 5a. Update Score
-
 		displayScore(currentScore, 32, 16, tAlphanumericTiles,
 					 tScreenBuffers[backBufferIdx],
 					 (const UBYTE *)alphanumeric_tiles_mask, numericSprites);
