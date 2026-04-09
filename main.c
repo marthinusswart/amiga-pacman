@@ -194,16 +194,18 @@ static void setupBuffers(void)
 	}
 }
 
-static int setupCopper(USHORT **copper1_out, tBitMap *screenBuffer)
+static int setupCopper(USHORT **copper_out, tBitMap *screenBuffer,
+					   volatile struct Custom *customPtr, const USHORT *colorPalette,
+					   USHORT **bplPtrsOut)
 {
-	if (!copper1_out || !screenBuffer)
+	if (!copper_out || !screenBuffer || !customPtr || !colorPalette || !bplPtrsOut)
 		return -1;
 
-	USHORT *copper1 = (USHORT *)AllocMem(1024, MEMF_CHIP);
-	if (!copper1)
+	USHORT *copper = (USHORT *)AllocMem(1024, MEMF_CHIP);
+	if (!copper)
 		return -1;
 
-	USHORT *copPtr = copper1;
+	USHORT *copPtr = copper;
 
 	screenScanDefault(&copPtr);
 
@@ -227,22 +229,22 @@ static int setupCopper(USHORT **copper1_out, tBitMap *screenBuffer)
 	{
 		planes[a] = screenBuffer->Planes[a];
 	}
-	bplPtrsInCopper = copPtr;			 // Save this globally so we can update it in the main loop!
+	*bplPtrsOut = copPtr;				 // Return pointer so caller can update it in the main loop
 	copSetPlanes(0, &copPtr, planes, 5); // INJECT pointers into copper list!
 
 	// set colors
 	for (int a = 0; a < 32; a++)
-		copSetColor(&copPtr, a, ((USHORT *)colors)[a]);
+		copSetColor(&copPtr, a, colorPalette[a]);
 
 	// end copper list
 	*copPtr++ = 0xffff;
 	*copPtr++ = 0xfffe;
 
-	custom->cop1lc = (ULONG)copper1;
-	custom->dmacon = DMAF_BLITTER; // disable blitter dma for copjmp bug
-	custom->copjmp1 = 0x7fff;	   // start coppper
+	customPtr->cop1lc = (ULONG)copper;
+	customPtr->dmacon = DMAF_BLITTER; // disable blitter dma for copjmp bug
+	customPtr->copjmp1 = 0x7fff;	  // start coppper
 
-	*copper1_out = copper1;
+	*copper_out = copper;
 	return 0;
 }
 
@@ -616,8 +618,8 @@ int main()
 	WaitVbl();
 
 	setupBuffers();
-	USHORT *copper1;
-	if (setupCopper(&copper1, tScreenBuffers[0]) != 0)
+	USHORT *copper;
+	if (setupCopper(&copper, tScreenBuffers[0], custom, (const USHORT *)colors, &bplPtrsInCopper) != 0)
 	{
 		KPrintF("Failed to setup copper\n");
 		return 0;
@@ -721,7 +723,7 @@ int main()
 	WaitVbl(); // Wait 1 frame to guarantee the handler is fully finished
 
 	KPrintF("Free Copper List!\n");
-	FreeMem(copper1, 1024);
+	FreeMem(copper, 1024);
 
 #ifdef MUSIC
 	KPrintF("End Music!\n");
