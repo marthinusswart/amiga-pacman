@@ -302,7 +302,7 @@ static void resetGameState(void)
 	}
 
 	addPelletsToMap(pellet, pelletsOnMap, tBackground, tPacmanTiles, tScreenBuffers,
-					(const UBYTE *)pacman_tiles_mask, mapping_stage_0001);
+					(const UBYTE *)pacman_tiles_mask, currentStageMap);
 
 	updateGameState(START_GAME_TEXT, ON);
 	updateGameState(CLEARED_START_TEXT, OFF);
@@ -378,7 +378,7 @@ static void loadNewStage(int stageNumber)
 	// addPelletsToMap(pellet, pelletsOnMap, tBackground, tPacmanTiles, tScreenBuffers,
 	// 				(const UBYTE *)pacman_tiles_mask, pacman_stage);
 
-	updateSpriteMaps(pacman, blueGhost, redGhost, pinkGhost, orangeGhost, (const UBYTE *)mapping_stage_0001);
+	updateSpriteMaps(pacman, blueGhost, redGhost, pinkGhost, orangeGhost, currentStageMap);
 }
 
 static int initializePositionTrackers(Position positions[][2], Ghost *blue, Ghost *red,
@@ -471,6 +471,7 @@ int main()
 	initializeGameState();
 
 	setupSprites();
+	/* Just a test, not really needed at this point */
 	loadNewStage(1);
 
 	// Initialize double buffering history trackers
@@ -487,9 +488,9 @@ int main()
 	updateGameState(GAME_OVER_TEXT, OFF);
 
 	addPowerPillsToMap(powerPill, tBackground, tPacmanTiles, tScreenBuffers,
-					   (const UBYTE *)pacman_tiles_mask, mapping_stage_0001);
+					   (const UBYTE *)pacman_tiles_mask, currentStageMap);
 	addPelletsToMap(pellet, pelletsOnMap, tBackground, tPacmanTiles, tScreenBuffers,
-					(const UBYTE *)pacman_tiles_mask, mapping_stage_0001);
+					(const UBYTE *)pacman_tiles_mask, currentStageMap);
 
 	while (TRUE)
 	{
