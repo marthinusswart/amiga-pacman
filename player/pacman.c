@@ -1,12 +1,22 @@
 #include "pacman.h"
 #include "ghost/ghost.h"
 
+#define PACMAN_DEBUG_OFF
+
+#define MOUTH_OPEN 0;
+#define MOUTH_HALF_CLOSING 1;
+#define MOUTH_CLOSED 2;
+#define MOUTH_HALF_OPENING 3;
+
 // Private forward declaration
 static void movePacman(Pacman *p, Direction direction);
-static void addSprite(Pacman *p, Direction direction, int spriteX, int spriteY, int width, int height, const UBYTE *spriteTileData);
+static void addSprite(Pacman *p, Direction direction, int index, int spriteX, int spriteY, int width, int height, const UBYTE *spriteTileData);
 static short getSprite(Pacman *p, Direction direction, Sprite **sprite_out);
+static short getSpriteIdx(Pacman *p, Direction direction, int index, Sprite **sprite_out);
 static void setMap(Pacman *p, const UBYTE *map);
 static int isPacmanColliding(Pacman *p, Ghost *redGhost, Ghost *blueGhost, Ghost *pinkGhost, Ghost *orangeGhost);
+static void updateAnimation(Pacman *p, Direction direction);
+static void pulseCheck(Pacman *p);
 
 short createPacman(Pacman **p_out, int x, int y, int width, int height)
 {
@@ -23,12 +33,20 @@ short createPacman(Pacman **p_out, int x, int y, int width, int height)
     p->height = height;
     p->prevX = x;
     p->prevY = y;
+    p->speed = 1; // Default speed, can be modified later
+    p->currentAnimationIndex = 0;
+    p->animationCounter = 0;
+    p->isAnimated = TRUE;
+    p->wasMoving = FALSE;
     p->direction = RIGHT;
+    p->lastDirection = RIGHT;
     p->movePacman = movePacman;               // Assign the function pointer
     p->addSprite = addSprite;                 // Assign the function pointer
     p->getSprite = getSprite;                 // Assign the function pointer
+    p->getSpriteIdx = getSpriteIdx;           // Assign the function pointer
     p->setMap = setMap;                       // Assign the function pointer
     p->isPacmanColliding = isPacmanColliding; // Assign the function pointer
+    p->pulseCheck = pulseCheck;               // Assign the function pointer
     p->currentMap = NULL;                     // Initialize safely
 
     *p_out = p; // Assign to the caller's pointer
@@ -40,6 +58,9 @@ static void movePacman(Pacman *p, Direction direction)
     p->prevX = p->x;
     p->prevY = p->y;
     p->direction = direction;
+    p->wasMoving = TRUE;
+
+    updateAnimation(p, direction);
 
     short nextX = p->x;
     short nextY = p->y;
@@ -83,22 +104,62 @@ static void movePacman(Pacman *p, Direction direction)
     }
 }
 
-static void addSprite(Pacman *p, Direction direction, int spriteX, int spriteY, int width, int height, const UBYTE *spriteTileData)
+static void updateAnimation(Pacman *p, Direction direction)
 {
+    if (p->isAnimated)
+    {
+        if (direction != p->lastDirection)
+        {
+            p->currentAnimationIndex = 0; // Reset animation when changing direction
+            p->animationCounter = 0;
+            p->lastDirection = direction;
+        }
+        else
+        {
+            if (p->animationCounter < (MAX_PACMAN_ANIMATION_SPEED - p->speed)) // Adjust this value to control animation speed
+            {
+                p->animationCounter++;
+            }
+            else
+            {
+                p->animationCounter = 0; // Reset counter for next frame
+                // Cycle through animation frames for the current direction
+                if (p->currentAnimationIndex >= (PACMAN_ANIMATION_FRAMES - 1))
+                {
+                    p->currentAnimationIndex = 0;
+                }
+                else if (p->currentAnimationIndex <= (PACMAN_ANIMATION_FRAMES - 1))
+                {
+                    p->currentAnimationIndex = (p->currentAnimationIndex + 1);
+                }
+
+#ifdef PACMAN_DEBUG_ON
+                DEBUG_PRINT("Pacman animation updated: direction=%ld, currentAnimationIndex=%ld\n", direction, p->currentAnimationIndex);
+#endif
+            }
+        }
+    }
+}
+
+static void addSprite(Pacman *p, Direction direction, int index, int spriteX, int spriteY, int width, int height, const UBYTE *spriteTileData)
+{
+    if (index < 0 || index >= PACMAN_ANIMATION_FRAMES)
+        return; // Prevent out of bounds index
+
     Sprite *sprite = NULL;
     switch (direction)
     {
     case LEFT:
-        sprite = &p->leftSprite;
+        sprite = &p->leftSprites[index];
         break;
     case UP:
-        sprite = &p->upSprite;
+        sprite = &p->upSprites[index];
         break;
     case RIGHT:
-        sprite = &p->rightSprite;
+        sprite = &p->rightSprites[index];
         break;
     case DOWN:
-        sprite = &p->downSprite;
+        sprite = &p->downSprites[index];
         break;
     default:
         return; // Invalid direction
@@ -112,22 +173,27 @@ static void addSprite(Pacman *p, Direction direction, int spriteX, int spriteY, 
 
 static short getSprite(Pacman *p, Direction direction, Sprite **sprite_out)
 {
-    if (!sprite_out)
+    return getSpriteIdx(p, direction, p->currentAnimationIndex, sprite_out);
+}
+
+static short getSpriteIdx(Pacman *p, Direction direction, int index, Sprite **sprite_out)
+{
+    if (!sprite_out || index < 0 || index >= PACMAN_ANIMATION_FRAMES)
         return -1;
 
     switch (direction)
     {
     case LEFT:
-        *sprite_out = &p->leftSprite;
+        *sprite_out = &p->leftSprites[index];
         return 0;
     case UP:
-        *sprite_out = &p->upSprite;
+        *sprite_out = &p->upSprites[index];
         return 0;
     case RIGHT:
-        *sprite_out = &p->rightSprite;
+        *sprite_out = &p->rightSprites[index];
         return 0;
     case DOWN:
-        *sprite_out = &p->downSprite;
+        *sprite_out = &p->downSprites[index];
         return 0;
     default:
         *sprite_out = NULL;
@@ -155,4 +221,18 @@ static int isPacmanColliding(Pacman *p, Ghost *redGhost, Ghost *blueGhost, Ghost
         return 1;
 
     return 0;
+}
+
+static void pulseCheck(Pacman *p)
+{
+    if (p->wasMoving)
+    {
+        p->wasMoving = FALSE; // Reset the flag for the next update
+    }
+    else
+    {
+        // Pacman is not moving, reset animation to the first frame (mouth open)
+        p->currentAnimationIndex = 0;
+        p->animationCounter = 0;
+    }
 }
