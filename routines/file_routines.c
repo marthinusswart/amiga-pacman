@@ -6,52 +6,52 @@
 
 extern struct ExecBase *SysBase;
 
-ULONG loadFileToChipMem(const char *szFilePath, void **pDataOut)
+ULONG loadFileToChipMem(const char *filePath, void **dataOut)
 {
-	if (!szFilePath || !pDataOut)
+	if (!filePath || !dataOut)
 		return 0;
 
-	*pDataOut = NULL;
+	*dataOut = NULL;
 
 	// Open the file
-	tFile *pFile = diskFileOpen(szFilePath, DISK_FILE_MODE_READ, 0);
+	tFile *pFile = diskFileOpen(filePath, DISK_FILE_MODE_READ, 0);
 	if (!pFile)
 		return 0;
 
 	// Get file size
-	LONG lFileSize = fileGetSize(pFile);
-	if (lFileSize <= 0)
+	LONG fileSize = fileGetSize(pFile);
+	if (fileSize <= 0)
 	{
 		fileClose(pFile);
 		return 0;
 	}
 
 	// Allocate chip memory
-	void *pChipMem = AllocMem(lFileSize, MEMF_CHIP | MEMF_CLEAR);
-	if (!pChipMem)
+	void *chipMem = AllocMem(fileSize, MEMF_CHIP | MEMF_CLEAR);
+	if (!chipMem)
 	{
 		fileClose(pFile);
 		return 0;
 	}
 
 	// Read file into chip memory
-	ULONG ulBytesRead = fileRead(pFile, pChipMem, lFileSize);
+	ULONG bytesRead = fileRead(pFile, chipMem, fileSize);
 	fileClose(pFile);
 
-	if (ulBytesRead != (ULONG)lFileSize)
+	if (bytesRead != (ULONG)fileSize)
 	{
-		FreeMem(pChipMem, lFileSize);
+		FreeMem(chipMem, fileSize);
 		return 0;
 	}
 
-	*pDataOut = pChipMem;
-	return (ULONG)lFileSize;
+	*dataOut = chipMem;
+	return (ULONG)fileSize;
 }
 
-void freeChipMem(void *pData, ULONG ulSize)
+void freeChipMem(void *data, ULONG size)
 {
-	if (pData && ulSize > 0)
+	if (data && size > 0)
 	{
-		FreeMem(pData, ulSize);
+		FreeMem(data, size);
 	}
 }

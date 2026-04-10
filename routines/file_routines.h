@@ -10,7 +10,7 @@
  * @param pDataOut Pointer to pointer that will receive the allocated chip memory address
  * @return File size in bytes on success, 0 on failure
  */
-ULONG loadFileToChipMem(const char *szFilePath, void **pDataOut);
+ULONG loadFileToChipMem(const char *filePath, void **dataOut);
 
 /**
  * @brief Free chip memory allocated by loadFileToChipMem
@@ -18,6 +18,6 @@ ULONG loadFileToChipMem(const char *szFilePath, void **pDataOut);
  * @param pData Pointer to the chip memory to free
  * @param ulSize Size of the memory block in bytes
  */
-void freeChipMem(void *pData, ULONG ulSize);
+void freeChipMem(void *data, ULONG size);
 
 #endif // FILE_ROUTINES_H

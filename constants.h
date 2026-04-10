@@ -1,0 +1,16 @@
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+
+#define HIGH_SCORE_TEXT_X 144
+#define HIGH_SCORE_TEXT_Y 0
+
+#define CURRENT_SCORE_X 32
+#define CURRENT_SCORE_Y 16
+
+#define HIGH_SCORE_X 160
+#define HIGH_SCORE_Y 16
+
+#define GAME_OVER_TEXT_X 108
+#define GAME_OVER_TEXT_Y 20
+
+#endif // CONSTANTS_H

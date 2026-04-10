@@ -31,10 +31,10 @@ void WaitLine(USHORT line);
 void WaitBlt(void);
 
 short screenScanDefault(USHORT **copListEnd_out);
-int setupBuffers(tBitMap **screenBuffers, tBitMap **pacmanTiles, tBitMap **background,
-				 const UBYTE *tileData, const UBYTE *backgroundData);
+int setupBuffers(tBitMap **screenBuffers, tBitMap **pacmanTiles, tBitMap **alphanumericTiles, tBitMap **background,
+                 const UBYTE *pacmanTileData, const UBYTE *alphanumericTileData, const UBYTE *backgroundData);
 void doubleBufferUpdates(tBitMap **screenBuffers, int *frontBufferIdx_out,
-						 int *backBufferIdx_out, USHORT *bplPtrs);
+                         int *backBufferIdx_out, USHORT *bplPtrs);
 // Calculates the X and Y pixel coordinates of a sprite within a tileset
 void calculateSpriteLocation(int row, int col, int spriteWidth, int spriteHeight, int tilesetWidth, int tilesetHeight, int *spriteX, int *spriteY);
 BOOL isValidSpriteLocation(int x, int y, int spriteWidth, int spriteHeight, int screenWidth, int screenHeight);

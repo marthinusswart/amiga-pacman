@@ -4,6 +4,16 @@
 void backgroundUpdates(tBitMap *background, Position lastPos[][2], int bufferIdx, tBitMap *screenBuffer,
 					   Ghost *orange, Ghost *blue, Ghost *red, Ghost *pink, Pacman *pac)
 {
+	// Clear the previous score display area
+	blitCopy(background, CURRENT_SCORE_X, CURRENT_SCORE_Y,	 // Source X, Y from background
+			 screenBuffer, CURRENT_SCORE_X, CURRENT_SCORE_Y, // Destination X, Y on screenBuffer
+			 32, 8, MINTERM_COOKIE);						 // Width, Height of the score area (4 digits * 8px width, 8px height)
+
+	// Clear the previous high score display area
+	blitCopy(background, HIGH_SCORE_X, HIGH_SCORE_Y,   // Source X, Y from background
+			 screenBuffer, HIGH_SCORE_X, HIGH_SCORE_Y, // Destination X, Y on screenBuffer
+			 32, 8, MINTERM_COOKIE);				   // Width, Height of the score area (4 digits * 8px width, 8px height)
+
 	blitCopy(background, lastPos[ORANGE][bufferIdx].x, lastPos[ORANGE][bufferIdx].y,
 			 screenBuffer, lastPos[ORANGE][bufferIdx].x, lastPos[ORANGE][bufferIdx].y,
 			 orange->width, orange->height, MINTERM_COOKIE);
@@ -90,4 +100,38 @@ void bobUpdates(Ghost *blue, Ghost *red, Ghost *pink, Ghost *orange, Pacman *pac
 			screenBuffer, pac->x, pac->y,
 			pac->width, pac->height,
 			tilesMask);
+}
+
+void displayGameOverText(Sprite *gameOverText, tBitMap *tiles, tBitMap **screenBuffers, const UBYTE *tilesMask)
+{
+	if (!gameOverText || !tiles || !screenBuffers || !tilesMask)
+		return;
+
+	blitCopyMask(
+		tiles, gameOverText->x, gameOverText->y,
+		screenBuffers[0], GAME_OVER_TEXT_X, GAME_OVER_TEXT_Y,
+		gameOverText->width, gameOverText->height,
+		tilesMask);
+	blitCopyMask(
+		tiles, gameOverText->x, gameOverText->y,
+		screenBuffers[1], GAME_OVER_TEXT_X, GAME_OVER_TEXT_Y,
+		gameOverText->width, gameOverText->height,
+		tilesMask);
+}
+
+void clearGameOverText(tBitMap *background, tBitMap **screenBuffers, Sprite *gameOverText)
+{
+	if (!background || !screenBuffers || !gameOverText)
+		return;
+
+	// Erase the game over text by copying the background over it
+	blitCopy(
+		background, GAME_OVER_TEXT_X, GAME_OVER_TEXT_Y,
+		screenBuffers[0], GAME_OVER_TEXT_X, GAME_OVER_TEXT_Y,
+		gameOverText->width, gameOverText->height, MINTERM_COOKIE);
+
+	blitCopy(
+		background, GAME_OVER_TEXT_X, GAME_OVER_TEXT_Y,
+		screenBuffers[1], GAME_OVER_TEXT_X, GAME_OVER_TEXT_Y,
+		gameOverText->width, gameOverText->height, MINTERM_COOKIE);
 }

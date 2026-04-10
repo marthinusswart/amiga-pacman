@@ -22,12 +22,15 @@
 #include "routines/collision_routines.h"
 #include "routines/pathfinding_routines.h"
 #include "routines/sprite_routines.h"
+#include "routines/memory_routines.h" // For pacman_tiles2
 #include "routines/render_routines.h"
 #include "player/pacman.h"
 #include "ghost/ghost.h"
 #include "routines/state_routines.h"
 #include "state/state_ext.h"
 #include "routines/file_routines.h"
+#include "routines/alphanumeric_routines.h"
+#include "constants.h"
 
 // config
 #define MUSIC_OFF
@@ -52,7 +55,6 @@ static int processInputs(void);
 static void gameStartUpdates(void);
 static void setGameOverState(void);
 static void resetGameState(void);
-static void displayGameOverText(void);
 static void updatePellets(Pacman *pacman,
 						  UBYTE *pelletsOnMap, tBitMap *tBackground,
 						  tBitMap *frontBuffer, tBitMap *backBuffer);
@@ -62,6 +64,8 @@ static int initializePositionTrackers(Position positions[][2],
 									  Ghost *blue, Ghost *red, Ghost *pink,
 									  Ghost *orange, Pacman *pacman);
 static int loadStageToBackground(int stageNumber);
+static int updateGameHUD();
+static void updateHighScore();
 /********************** */
 
 struct ExecBase *SysBase;
@@ -69,17 +73,22 @@ volatile struct Custom *custom;
 struct DosLibrary *DOSBase;
 struct GfxBase *GfxBase;
 
-/*   Game Sprites   */
+/* ------------ Game Sprites ---------- */
 Pacman *pacman;
 Ghost *blueGhost;
 Ghost *redGhost;
 Ghost *pinkGhost;
 Ghost *orangeGhost;
-Sprite *startText;
-Sprite *gameOverText;
 Sprite *powerPill;
 Sprite *pellet;
-/****************** */
+/* ------------ Game Sprites ---------- */
+
+/* ------------ Text Sprites ---------- */
+Sprite *startText;
+Sprite *gameOverText;
+Sprite *numericSprites[10]; // Array for numeric sprites
+Sprite *highScoreText;
+/* ------------ Text Sprites ---------- */
 
 // backup
 UWORD SystemInts;
@@ -95,18 +104,22 @@ USHORT *bplPtrsInCopper = NULL;
 int frontBufferIdx = 0;
 int backBufferIdx = 1;
 tBitMap *tPacmanTiles = NULL;
+tBitMap *tAlphanumericTiles = NULL;
 tBitMap *tBackground = NULL;
 
 // Double buffering history trackers. Array index 0 tracks Buffer 0, index 1 tracks Buffer 1.
 static Position lastPosition[NUM_ENTITIES][2];
-
 static UBYTE pelletsOnMap[320];
+static int currentScore = 0;
+static int highScore = 0;
 
 // DEMO - INCBIN
 volatile short frameCounter = 0;
 INCBIN(colors, "pal/pacman_tiles.pal")
 INCBIN_CHIP(pacman_tiles, "bpl/pacman_tiles.bpl")
 INCBIN_CHIP(pacman_tiles_mask, "bpl/pacman_tiles_mask.bpl")
+INCBIN_CHIP(alphanumeric_tiles, "bpl/alphanumeric.bpl")
+INCBIN_CHIP(alphanumeric_tiles_mask, "bpl/alphanumeric_mask.bpl")
 
 // Dynamic stage loading
 static void *pacman_stage = NULL;
@@ -162,6 +175,8 @@ static void teardownEnvironment(void)
 		bitmapDestroy(tScreenBuffers[0]);
 	if (tScreenBuffers[1])
 		bitmapDestroy(tScreenBuffers[1]);
+	if (tAlphanumericTiles)
+		FreeMem(tAlphanumericTiles, sizeof(tBitMap));
 	if (tPacmanTiles)
 		FreeMem(tPacmanTiles, sizeof(tBitMap));
 	if (tBackground)
@@ -270,16 +285,7 @@ static void gameStartUpdates(void)
 	if (getGameState(CLEAR_GAME_OVER_TEXT) == ON)
 	{
 		updateGameState(CLEAR_GAME_OVER_TEXT, OFF);
-		// Erase the start text by copying the background over it
-		blitCopy(
-			tBackground, 108, 16,
-			tScreenBuffers[0], 108, 16,
-			gameOverText->width, gameOverText->height, MINTERM_COOKIE);
-
-		blitCopy(
-			tBackground, 108, 16,
-			tScreenBuffers[1], 108, 16,
-			gameOverText->width, gameOverText->height, MINTERM_COOKIE);
+		clearGameOverText(tBackground, tScreenBuffers, gameOverText);
 	}
 }
 
@@ -324,6 +330,8 @@ static void resetGameState(void)
 		orangeGhost->direction = RIGHT;
 	}
 
+	currentScore = 0;
+
 	addPelletsToMap(pellet, pelletsOnMap, tBackground, tPacmanTiles, tScreenBuffers,
 					(const UBYTE *)pacman_tiles_mask, currentStageMap);
 
@@ -332,20 +340,6 @@ static void resetGameState(void)
 	updateGameState(PLAYING_STATE, OFF);
 	updateGameState(GAME_OVER_TEXT, OFF);
 	updateGameState(CLEAR_GAME_OVER_TEXT, ON);
-}
-
-static void displayGameOverText(void)
-{
-	blitCopyMask(
-		tPacmanTiles, gameOverText->x, gameOverText->y,
-		tScreenBuffers[0], 108, 16,
-		gameOverText->width, gameOverText->height,
-		(const UBYTE *)pacman_tiles_mask);
-	blitCopyMask(
-		tPacmanTiles, gameOverText->x, gameOverText->y,
-		tScreenBuffers[1], 108, 16,
-		gameOverText->width, gameOverText->height,
-		(const UBYTE *)pacman_tiles_mask);
 }
 
 static void updatePellets(Pacman *pacman, UBYTE *pelletsOnMap, tBitMap *tBackground, tBitMap *frontBuffer, tBitMap *backBuffer)
@@ -364,27 +358,40 @@ static void updatePellets(Pacman *pacman, UBYTE *pelletsOnMap, tBitMap *tBackgro
 		int tileIndex = tileRow * 20 + tileCol;
 
 		pelletsOnMap[tileIndex] = 0;
-		DEBUG_PRINT("Pellet picked up!\n");
+		currentScore += 1;
+
+		updateHighScore();
 
 		int tileX = tileCol * 16;
 		int tileY = tileRow * 16;
 
 		// Erase the pellet by filling its 16x16 bounding box with color 0 (black)
-		blitRect(tBackground, tileX, tileY, 16, 16, 0);
+		// only blit the area of the pellet, not the entire tile, to preserve maze walls and other details
+		blitRect(tBackground, tileX, tileY + 1, 16, 14, 0);
+	}
+}
+
+static void updateHighScore()
+{
+	if (currentScore > highScore)
+	{
+		highScore = currentScore;
 	}
 }
 
 static void setupSprites(void)
 {
-	setupPacman(&pacman);
-	setupBlueGhost(&blueGhost);
-	setupRedGhost(&redGhost);
-	setupPinkGhost(&pinkGhost);
-	setupOrangeGhost(&orangeGhost);
-	setupStartText(&startText);
-	setupGameOverText(&gameOverText);
-	setupPowerPill(&powerPill);
-	setupPellets(&pellet);
+	setupPacman(&pacman, (const UBYTE *)pacman_tiles);
+	setupBlueGhost(&blueGhost, (const UBYTE *)pacman_tiles);
+	setupRedGhost(&redGhost, (const UBYTE *)pacman_tiles);
+	setupPinkGhost(&pinkGhost, (const UBYTE *)pacman_tiles);
+	setupOrangeGhost(&orangeGhost, (const UBYTE *)pacman_tiles);
+	setupStartText(&startText, (const UBYTE *)pacman_tiles);
+	setupGameOverText(&gameOverText, (const UBYTE *)pacman_tiles);
+	setupHighScoreText(&highScoreText, (const UBYTE *)pacman_tiles);
+	setupPowerPill(&powerPill, (const UBYTE *)pacman_tiles);
+	setupPellets(&pellet, (const UBYTE *)pacman_tiles);
+	setupNumbers(numericSprites, (const UBYTE *)alphanumeric_tiles);
 }
 
 static void loadNewStage(int stageNumber)
@@ -402,6 +409,25 @@ static void loadNewStage(int stageNumber)
 	// 				(const UBYTE *)pacman_tiles_mask, pacman_stage);
 
 	updateSpriteMaps(pacman, blueGhost, redGhost, pinkGhost, orangeGhost, currentStageMap);
+	updateGameHUD();
+}
+
+static int updateGameHUD()
+{
+	// Add the high score text to the top center of the screen
+	blitCopyMask(
+		tPacmanTiles, highScoreText->x, highScoreText->y,
+		tScreenBuffers[0], HIGH_SCORE_TEXT_X, HIGH_SCORE_TEXT_Y,
+		highScoreText->width, highScoreText->height,
+		(const UBYTE *)pacman_tiles_mask);
+
+	blitCopyMask(
+		tPacmanTiles, highScoreText->x, highScoreText->y,
+		tScreenBuffers[1], HIGH_SCORE_TEXT_X, HIGH_SCORE_TEXT_Y,
+		highScoreText->width, highScoreText->height,
+		(const UBYTE *)pacman_tiles_mask);
+
+	return 0;
 }
 
 static int initializePositionTrackers(Position positions[][2], Ghost *blue, Ghost *red,
@@ -477,7 +503,7 @@ int main()
 		return 0;
 	}
 
-	if (setupBuffers(tScreenBuffers, &tPacmanTiles, &tBackground, pacman_tiles, pacman_stage) != 0)
+	if (setupBuffers(tScreenBuffers, &tPacmanTiles, &tAlphanumericTiles, &tBackground, pacman_tiles, alphanumeric_tiles, pacman_stage) != 0)
 	{
 		DEBUG_PRINT("Failed to setup buffers\n");
 		teardownEnvironment();
@@ -492,10 +518,7 @@ int main()
 		return 0;
 	}
 	initializeGameState();
-
 	setupSprites();
-	/* Just a test, not really needed at this point */
-	loadNewStage(1);
 
 	// Initialize double buffering history trackers
 	initializePositionTrackers(lastPosition, blueGhost, redGhost, pinkGhost, orangeGhost, pacman);
@@ -509,6 +532,9 @@ int main()
 	updateGameState(CLEARED_START_TEXT, OFF);
 	updateGameState(PLAYING_STATE, OFF);
 	updateGameState(GAME_OVER_TEXT, OFF);
+
+	/* Just a test, not really needed at this point */
+	loadNewStage(1);
 
 	addPowerPillsToMap(powerPill, tBackground, tPacmanTiles, tScreenBuffers,
 					   (const UBYTE *)pacman_tiles_mask, currentStageMap);
@@ -551,7 +577,16 @@ int main()
 				   lastPosition, backBufferIdx, tPacmanTiles, tScreenBuffers[backBufferIdx],
 				   (const UBYTE *)pacman_tiles_mask);
 
-		// 6. Wait for VBlank and swap buffers
+		// 5a. Update Score
+		displayNumbers(currentScore, CURRENT_SCORE_X, CURRENT_SCORE_Y, tAlphanumericTiles,
+					   tScreenBuffers[backBufferIdx],
+					   (const UBYTE *)alphanumeric_tiles_mask, numericSprites, 4);
+
+		// 5b. Update High Score
+		displayNumbers(highScore, HIGH_SCORE_X, HIGH_SCORE_Y, tAlphanumericTiles,
+					   tScreenBuffers[backBufferIdx],
+					   (const UBYTE *)alphanumeric_tiles_mask, numericSprites, 4);
+
 		// ==========================================
 		// SWAP PHASE: Wait for VBlank, then swap buffers
 		// ==========================================
@@ -561,14 +596,14 @@ int main()
 		// 7. Check for collisions between Pacman and the ghosts
 		if (pacman->isPacmanColliding(pacman, redGhost, blueGhost, pinkGhost, orangeGhost))
 		{
-			DEBUG_PRINT("Pacman collided with a ghost!\n");
 			setGameOverState();
 		}
 
 		// 8. Check Game Over state and reset if player clicks to restart
 		if (getGameState(GAME_OVER_TEXT) == ON)
 		{
-			displayGameOverText();
+			displayGameOverText(gameOverText, tPacmanTiles, tScreenBuffers,
+								(const UBYTE *)pacman_tiles_mask);
 		}
 
 		keyProcess(); // Process pending keystrokes from the CIA interrupt buffer
