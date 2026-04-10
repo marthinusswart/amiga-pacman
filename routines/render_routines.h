@@ -13,4 +13,9 @@ void bobUpdates(Ghost *blue, Ghost *red, Ghost *pink, Ghost *orange, Pacman *pac
 				Position lastPos[][2], int bufferIdx, tBitMap *tiles, tBitMap *screenBuffer,
 				const UBYTE *tilesMask);
 
+void displayGameOverText(Sprite *gameOverText, tBitMap *tiles, tBitMap **screenBuffers,
+						 const UBYTE *tilesMask);
+
+void clearGameOverText(tBitMap *background, tBitMap **screenBuffers, Sprite *gameOverText);
+
 #endif // RENDER_ROUTINES_H

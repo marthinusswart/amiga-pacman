@@ -55,7 +55,6 @@ static int processInputs(void);
 static void gameStartUpdates(void);
 static void setGameOverState(void);
 static void resetGameState(void);
-static void displayGameOverText(void);
 static void updatePellets(Pacman *pacman,
 						  UBYTE *pelletsOnMap, tBitMap *tBackground,
 						  tBitMap *frontBuffer, tBitMap *backBuffer);
@@ -286,16 +285,7 @@ static void gameStartUpdates(void)
 	if (getGameState(CLEAR_GAME_OVER_TEXT) == ON)
 	{
 		updateGameState(CLEAR_GAME_OVER_TEXT, OFF);
-		// Erase the start text by copying the background over it
-		blitCopy(
-			tBackground, 108, 16,
-			tScreenBuffers[0], 108, 16,
-			gameOverText->width, gameOverText->height, MINTERM_COOKIE);
-
-		blitCopy(
-			tBackground, 108, 16,
-			tScreenBuffers[1], 108, 16,
-			gameOverText->width, gameOverText->height, MINTERM_COOKIE);
+		clearGameOverText(tBackground, tScreenBuffers, gameOverText);
 	}
 }
 
@@ -350,20 +340,6 @@ static void resetGameState(void)
 	updateGameState(PLAYING_STATE, OFF);
 	updateGameState(GAME_OVER_TEXT, OFF);
 	updateGameState(CLEAR_GAME_OVER_TEXT, ON);
-}
-
-static void displayGameOverText(void)
-{
-	blitCopyMask(
-		tPacmanTiles, gameOverText->x, gameOverText->y,
-		tScreenBuffers[0], 108, 16,
-		gameOverText->width, gameOverText->height,
-		(const UBYTE *)pacman_tiles_mask);
-	blitCopyMask(
-		tPacmanTiles, gameOverText->x, gameOverText->y,
-		tScreenBuffers[1], 108, 16,
-		gameOverText->width, gameOverText->height,
-		(const UBYTE *)pacman_tiles_mask);
 }
 
 static void updatePellets(Pacman *pacman, UBYTE *pelletsOnMap, tBitMap *tBackground, tBitMap *frontBuffer, tBitMap *backBuffer)
@@ -626,7 +602,8 @@ int main()
 		// 8. Check Game Over state and reset if player clicks to restart
 		if (getGameState(GAME_OVER_TEXT) == ON)
 		{
-			displayGameOverText();
+			displayGameOverText(gameOverText, tPacmanTiles, tScreenBuffers,
+								(const UBYTE *)pacman_tiles_mask);
 		}
 
 		keyProcess(); // Process pending keystrokes from the CIA interrupt buffer

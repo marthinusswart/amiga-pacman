@@ -10,4 +10,7 @@
 #define HIGH_SCORE_X 160
 #define HIGH_SCORE_Y 16
 
+#define GAME_OVER_TEXT_X 108
+#define GAME_OVER_TEXT_Y 20
+
 #endif // CONSTANTS_H

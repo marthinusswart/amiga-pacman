@@ -101,3 +101,37 @@ void bobUpdates(Ghost *blue, Ghost *red, Ghost *pink, Ghost *orange, Pacman *pac
 			pac->width, pac->height,
 			tilesMask);
 }
+
+void displayGameOverText(Sprite *gameOverText, tBitMap *tiles, tBitMap **screenBuffers, const UBYTE *tilesMask)
+{
+	if (!gameOverText || !tiles || !screenBuffers || !tilesMask)
+		return;
+
+	blitCopyMask(
+		tiles, gameOverText->x, gameOverText->y,
+		screenBuffers[0], GAME_OVER_TEXT_X, GAME_OVER_TEXT_Y,
+		gameOverText->width, gameOverText->height,
+		tilesMask);
+	blitCopyMask(
+		tiles, gameOverText->x, gameOverText->y,
+		screenBuffers[1], GAME_OVER_TEXT_X, GAME_OVER_TEXT_Y,
+		gameOverText->width, gameOverText->height,
+		tilesMask);
+}
+
+void clearGameOverText(tBitMap *background, tBitMap **screenBuffers, Sprite *gameOverText)
+{
+	if (!background || !screenBuffers || !gameOverText)
+		return;
+
+	// Erase the game over text by copying the background over it
+	blitCopy(
+		background, GAME_OVER_TEXT_X, GAME_OVER_TEXT_Y,
+		screenBuffers[0], GAME_OVER_TEXT_X, GAME_OVER_TEXT_Y,
+		gameOverText->width, gameOverText->height, MINTERM_COOKIE);
+
+	blitCopy(
+		background, GAME_OVER_TEXT_X, GAME_OVER_TEXT_Y,
+		screenBuffers[1], GAME_OVER_TEXT_X, GAME_OVER_TEXT_Y,
+		gameOverText->width, gameOverText->height, MINTERM_COOKIE);
+}
