@@ -187,6 +187,27 @@ short setupGameOverText(Sprite **gameOverText, const UBYTE *spriteTileData)
     return 0;
 }
 
+short setupHighScoreText(Sprite **highScoreText, const UBYTE *spriteTileData)
+{
+    int bobX = 0;
+    int bobY = 0;
+    SPRITE_PRINTF("Create High Score Text!\n");
+    if (createSprite(highScoreText) != 0)
+    {
+        SPRITE_PRINTF("Failed to create High Score Text!\n");
+        return -1;
+    }
+    calculateSpriteLocation(1, 0, 16, 16, 320, 320, &bobX, &bobY);
+    SPRITE_PRINTF("Created HIGH SCORE TEXT sprite at (%ld, %ld)\n", bobX, bobY);
+    (*highScoreText)->x = bobX;
+    (*highScoreText)->y = bobY;
+    (*highScoreText)->width = 48;
+    (*highScoreText)->height = 16;
+    (*highScoreText)->spriteData = spriteTileData;
+
+    return 0;
+}
+
 short setupPowerPill(Sprite **powerPill, const UBYTE *spriteTileData)
 {
     int bobX = 0;

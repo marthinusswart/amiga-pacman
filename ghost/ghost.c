@@ -4,7 +4,7 @@
 static void moveGhost(Ghost *g, Direction direction);
 static void addSprite(Ghost *g, Direction direction, int spriteX, int spriteY, int width, int height, const UBYTE *spriteTileData);
 static short getSprite(Ghost *g, Direction direction, Sprite **sprite_out);
-static void setMap(Ghost *g, UBYTE *map);
+static void setMap(Ghost *g, const UBYTE *map);
 
 short createGhost(Ghost **g_out, int x, int y, int width, int height)
 {
@@ -142,7 +142,7 @@ static short getSprite(Ghost *g, Direction direction, Sprite **sprite_out)
     }
 }
 
-static void setMap(Ghost *g, UBYTE *map)
+static void setMap(Ghost *g, const UBYTE *map)
 {
     g->currentMap = map;
 }

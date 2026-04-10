@@ -5,7 +5,7 @@
 
 short setupNumbers(Sprite *numericSprites[10], const UBYTE *spriteTileData);
 
-void displayScore(int score, int startX, int startY, tBitMap *tiles, tBitMap *screenBuffer,
-                  const UBYTE *tilesMask, Sprite *numericSprites[10]);
+void displayNumbers(int score, int startX, int startY, tBitMap *tiles, tBitMap *screenBuffer,
+                    const UBYTE *tilesMask, Sprite *numericSprites[10], int leftPadding);
 
 #endif // ALPHANUMERIC_ROUTINES_H

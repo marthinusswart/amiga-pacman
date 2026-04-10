@@ -5,10 +5,15 @@ void backgroundUpdates(tBitMap *background, Position lastPos[][2], int bufferIdx
 					   Ghost *orange, Ghost *blue, Ghost *red, Ghost *pink, Pacman *pac)
 {
 	// Clear the previous score display area
-	blitCopy(background, 32, 16,   // Source X, Y from background
-			 screenBuffer, 32, 16, // Destination X, Y on screenBuffer
-			 32, 8,				   // Width, Height of the score area (4 digits * 8px width, 8px height)
-			 MINTERM_COOKIE);
+	blitCopy(background, CURRENT_SCORE_X, CURRENT_SCORE_Y,	 // Source X, Y from background
+			 screenBuffer, CURRENT_SCORE_X, CURRENT_SCORE_Y, // Destination X, Y on screenBuffer
+			 32, 8, MINTERM_COOKIE);						 // Width, Height of the score area (4 digits * 8px width, 8px height)
+
+	// Clear the previous high score display area
+	blitCopy(background, HIGH_SCORE_X, HIGH_SCORE_Y,   // Source X, Y from background
+			 screenBuffer, HIGH_SCORE_X, HIGH_SCORE_Y, // Destination X, Y on screenBuffer
+			 32, 8, MINTERM_COOKIE);				   // Width, Height of the score area (4 digits * 8px width, 8px height)
+
 	blitCopy(background, lastPos[ORANGE][bufferIdx].x, lastPos[ORANGE][bufferIdx].y,
 			 screenBuffer, lastPos[ORANGE][bufferIdx].x, lastPos[ORANGE][bufferIdx].y,
 			 orange->width, orange->height, MINTERM_COOKIE);

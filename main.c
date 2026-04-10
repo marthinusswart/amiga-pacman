@@ -30,6 +30,7 @@
 #include "state/state_ext.h"
 #include "routines/file_routines.h"
 #include "routines/alphanumeric_routines.h"
+#include "constants.h"
 
 // config
 #define MUSIC_OFF
@@ -64,6 +65,8 @@ static int initializePositionTrackers(Position positions[][2],
 									  Ghost *blue, Ghost *red, Ghost *pink,
 									  Ghost *orange, Pacman *pacman);
 static int loadStageToBackground(int stageNumber);
+static int updateGameHUD();
+static void updateHighScore();
 /********************** */
 
 struct ExecBase *SysBase;
@@ -85,7 +88,7 @@ Sprite *pellet;
 Sprite *startText;
 Sprite *gameOverText;
 Sprite *numericSprites[10]; // Array for numeric sprites
-Sprite *highScoreSprite;
+Sprite *highScoreText;
 /* ------------ Text Sprites ---------- */
 
 // backup
@@ -109,6 +112,7 @@ tBitMap *tBackground = NULL;
 static Position lastPosition[NUM_ENTITIES][2];
 static UBYTE pelletsOnMap[320];
 static int currentScore = 0;
+static int highScore = 0;
 
 // DEMO - INCBIN
 volatile short frameCounter = 0;
@@ -380,12 +384,22 @@ static void updatePellets(Pacman *pacman, UBYTE *pelletsOnMap, tBitMap *tBackgro
 		pelletsOnMap[tileIndex] = 0;
 		currentScore += 1;
 
+		updateHighScore();
+
 		int tileX = tileCol * 16;
 		int tileY = tileRow * 16;
 
 		// Erase the pellet by filling its 16x16 bounding box with color 0 (black)
 		// only blit the area of the pellet, not the entire tile, to preserve maze walls and other details
 		blitRect(tBackground, tileX, tileY + 1, 16, 14, 0);
+	}
+}
+
+static void updateHighScore()
+{
+	if (currentScore > highScore)
+	{
+		highScore = currentScore;
 	}
 }
 
@@ -398,6 +412,7 @@ static void setupSprites(void)
 	setupOrangeGhost(&orangeGhost, (const UBYTE *)pacman_tiles);
 	setupStartText(&startText, (const UBYTE *)pacman_tiles);
 	setupGameOverText(&gameOverText, (const UBYTE *)pacman_tiles);
+	setupHighScoreText(&highScoreText, (const UBYTE *)pacman_tiles);
 	setupPowerPill(&powerPill, (const UBYTE *)pacman_tiles);
 	setupPellets(&pellet, (const UBYTE *)pacman_tiles);
 	setupNumbers(numericSprites, (const UBYTE *)alphanumeric_tiles);
@@ -418,6 +433,25 @@ static void loadNewStage(int stageNumber)
 	// 				(const UBYTE *)pacman_tiles_mask, pacman_stage);
 
 	updateSpriteMaps(pacman, blueGhost, redGhost, pinkGhost, orangeGhost, currentStageMap);
+	updateGameHUD();
+}
+
+static int updateGameHUD()
+{
+	// Add the high score text to the top center of the screen
+	blitCopyMask(
+		tPacmanTiles, highScoreText->x, highScoreText->y,
+		tScreenBuffers[0], HIGH_SCORE_TEXT_X, HIGH_SCORE_TEXT_Y,
+		highScoreText->width, highScoreText->height,
+		(const UBYTE *)pacman_tiles_mask);
+
+	blitCopyMask(
+		tPacmanTiles, highScoreText->x, highScoreText->y,
+		tScreenBuffers[1], HIGH_SCORE_TEXT_X, HIGH_SCORE_TEXT_Y,
+		highScoreText->width, highScoreText->height,
+		(const UBYTE *)pacman_tiles_mask);
+
+	return 0;
 }
 
 static int initializePositionTrackers(Position positions[][2], Ghost *blue, Ghost *red,
@@ -508,10 +542,7 @@ int main()
 		return 0;
 	}
 	initializeGameState();
-
 	setupSprites();
-	/* Just a test, not really needed at this point */
-	loadNewStage(1);
 
 	// Initialize double buffering history trackers
 	initializePositionTrackers(lastPosition, blueGhost, redGhost, pinkGhost, orangeGhost, pacman);
@@ -525,6 +556,9 @@ int main()
 	updateGameState(CLEARED_START_TEXT, OFF);
 	updateGameState(PLAYING_STATE, OFF);
 	updateGameState(GAME_OVER_TEXT, OFF);
+
+	/* Just a test, not really needed at this point */
+	loadNewStage(1);
 
 	addPowerPillsToMap(powerPill, tBackground, tPacmanTiles, tScreenBuffers,
 					   (const UBYTE *)pacman_tiles_mask, currentStageMap);
@@ -568,9 +602,15 @@ int main()
 				   (const UBYTE *)pacman_tiles_mask);
 
 		// 5a. Update Score
-		displayScore(currentScore, 32, 16, tAlphanumericTiles,
-					 tScreenBuffers[backBufferIdx],
-					 (const UBYTE *)alphanumeric_tiles_mask, numericSprites);
+		displayNumbers(currentScore, CURRENT_SCORE_X, CURRENT_SCORE_Y, tAlphanumericTiles,
+					   tScreenBuffers[backBufferIdx],
+					   (const UBYTE *)alphanumeric_tiles_mask, numericSprites, 4);
+
+		// 5b. Update High Score
+		displayNumbers(highScore, HIGH_SCORE_X, HIGH_SCORE_Y, tAlphanumericTiles,
+					   tScreenBuffers[backBufferIdx],
+					   (const UBYTE *)alphanumeric_tiles_mask, numericSprites, 4);
+
 		// ==========================================
 		// SWAP PHASE: Wait for VBlank, then swap buffers
 		// ==========================================

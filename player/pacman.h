@@ -24,7 +24,7 @@ typedef struct Pacman
     int width;
     int height;
     Direction direction;
-    UBYTE *currentMap;
+    const UBYTE *currentMap;
     Sprite downSprite;
     Sprite upSprite;
     Sprite leftSprite;
@@ -34,7 +34,7 @@ typedef struct Pacman
     void (*movePacman)(struct Pacman *p, Direction dir);
     void (*addSprite)(struct Pacman *p, Direction dir, int spriteX, int spriteY, int width, int height, const UBYTE *spriteTileData);
     short (*getSprite)(struct Pacman *p, Direction dir, Sprite **sprite_out);
-    void (*setMap)(struct Pacman *p, UBYTE *map);
+    void (*setMap)(struct Pacman *p, const UBYTE *map);
     int (*isPacmanColliding)(struct Pacman *p, struct Ghost *redGhost, struct Ghost *blueGhost, struct Ghost *pinkGhost, struct Ghost *orangeGhost);
 } Pacman;
 

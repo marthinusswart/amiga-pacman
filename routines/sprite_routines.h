@@ -15,6 +15,7 @@ short setupPinkGhost(Ghost **pinkGhost, const UBYTE *spriteTileData);
 short setupOrangeGhost(Ghost **orangeGhost, const UBYTE *spriteTileData);
 short setupStartText(Sprite **startText, const UBYTE *spriteTileData);
 short setupGameOverText(Sprite **gameOverText, const UBYTE *spriteTileData);
+short setupHighScoreText(Sprite **highScoreText, const UBYTE *spriteTileData);
 short setupPowerPill(Sprite **powerPill, const UBYTE *spriteTileData);
 short setupPellets(Sprite **pellet, const UBYTE *spriteTileData);
 short setupSprite(Sprite **sprite, const UBYTE *spriteTileData, int row, int col,

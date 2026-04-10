@@ -4,7 +4,7 @@
 // Using bit-shifts (>> 4) instead of division ( / 16) for 68k speed!
 #define GET_TILE(map, x, y) (map)[((y) >> 4) * 20 + ((x) >> 4)]
 
-int canMove(UBYTE *map, short *spriteX, short *spriteY, short nextX, short nextY)
+int canMove(const UBYTE *map, short *spriteX, short *spriteY, short nextX, short nextY)
 {
     UBYTE tl = GET_TILE(map, nextX, nextY);
     UBYTE tr = GET_TILE(map, nextX + 15, nextY);
@@ -104,7 +104,7 @@ int isColliding(int spriteAX, int spriteAY, int spriteAWidth, int spriteAHeight,
             (spriteAY + spriteAHeight) >= (spriteBY + overlap));
 }
 
-int tileHasPellet(UBYTE *pelletsOnMap, int x, int y)
+int tileHasPellet(const UBYTE *pelletsOnMap, int x, int y)
 {
     UBYTE tileValue = GET_TILE(pelletsOnMap, x, y);
     return (tileValue == 1);

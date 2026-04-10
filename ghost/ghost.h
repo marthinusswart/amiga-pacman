@@ -21,7 +21,7 @@ typedef struct Ghost
     int speed;
     BOOL movedPreviousFrame;
     Direction direction;
-    UBYTE *currentMap;
+    const UBYTE *currentMap;
     Sprite downSprite;
     Sprite upSprite;
     Sprite leftSprite;
@@ -31,7 +31,7 @@ typedef struct Ghost
     void (*moveGhost)(struct Ghost *g, Direction dir);
     void (*addSprite)(struct Ghost *g, Direction dir, int spriteX, int spriteY, int width, int height, const UBYTE *spriteTileData);
     short (*getSprite)(struct Ghost *g, Direction dir, Sprite **sprite_out);
-    void (*setMap)(struct Ghost *g, UBYTE *map);
+    void (*setMap)(struct Ghost *g, const UBYTE *map);
 } Ghost;
 
 short createGhost(Ghost **g_out, int x, int y, int width, int height);

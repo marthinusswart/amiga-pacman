@@ -12,8 +12,8 @@ short setupNumbers(Sprite *numericSprites[10], const UBYTE *spriteTileData)
     return 0;
 }
 
-void displayScore(int score, int startX, int startY, tBitMap *tiles, tBitMap *screenBuffer,
-                  const UBYTE *tilesMask, Sprite *numericSprites[10])
+void displayNumbers(int score, int startX, int startY, tBitMap *tiles, tBitMap *screenBuffer,
+                    const UBYTE *tilesMask, Sprite *numericSprites[10], int leftPadding)
 {
     char scoreStr[5]; // Max 4 digits + null terminator
     // Format the score as a 4-digit string, left-padded with zeros.
@@ -21,7 +21,7 @@ void displayScore(int score, int startX, int startY, tBitMap *tiles, tBitMap *sc
     sprintf(scoreStr, "%04d", score);
 
     int currentX = startX;
-    for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < leftPadding; ++i)
     {
         int digit = scoreStr[i] - '0'; // Convert char digit ('0'-'9') to int (0-9)
         if (digit >= 0 && digit <= 9)
