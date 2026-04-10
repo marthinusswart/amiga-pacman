@@ -30,18 +30,11 @@
 #include "state/state_ext.h"
 #include "routines/file_routines.h"
 #include "routines/alphanumeric_routines.h"
+#include "routines/log_routines.h"
 #include "constants.h"
 
 // config
-#define MUSIC_OFF
-#define DEBUG_ON
-
-// Debug print macro
-#ifdef DEBUG_ON
-#define DEBUG_PRINT(fmt, ...) KPrintF(fmt, ##__VA_ARGS__)
-#else
-#define DEBUG_PRINT(fmt, ...) ((void)0)
-#endif
+#define MUSIC
 
 /* forward declarations */
 static void vblankHandler(volatile struct Custom *pCustom, volatile void *pData);
@@ -225,7 +218,7 @@ static int processInputs(void)
 	if (keyCheck(KEY_ESCAPE))
 		return 0; // Signal to break the main loop
 
-	if (getGameState(PLAYING_STATE) == ON)
+	if ((getGameState(PLAYING_STATE) == ON) || (getGameState(PACMAN_DEBUG_MODE) == ON))
 	{
 		if (keyCheck(KEY_LEFT) || keyCheck(KEY_A))
 			pacman->movePacman(pacman, LEFT);
@@ -532,6 +525,8 @@ int main()
 	updateGameState(CLEARED_START_TEXT, OFF);
 	updateGameState(PLAYING_STATE, OFF);
 	updateGameState(GAME_OVER_TEXT, OFF);
+	updateGameState(PACMAN_DEBUG_MODE, OFF);
+	updateGameState(FREEZE_GHOSTS, ON);
 
 	/* Just a test, not really needed at this point */
 	loadNewStage(1);
@@ -554,7 +549,7 @@ int main()
 		}
 
 		// 2. Update ghost paths and positions
-		if (getGameState(PLAYING_STATE) == ON)
+		if ((getGameState(PLAYING_STATE) == ON) && (getGameState(FREEZE_GHOSTS) == OFF))
 		{
 			ghostUpdates(pacman, redGhost, blueGhost, pinkGhost, orangeGhost);
 		}
@@ -592,6 +587,7 @@ int main()
 		// ==========================================
 		WaitVbl();
 		doubleBufferUpdates(tScreenBuffers, &frontBufferIdx, &backBufferIdx, bplPtrsInCopper);
+		bobPulseCheck(pacman);
 
 		// 7. Check for collisions between Pacman and the ghosts
 		if (pacman->isPacmanColliding(pacman, redGhost, blueGhost, pinkGhost, orangeGhost))

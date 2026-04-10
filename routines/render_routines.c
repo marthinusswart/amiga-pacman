@@ -35,7 +35,7 @@ void backgroundUpdates(tBitMap *background, Position lastPos[][2], int bufferIdx
 			 pac->width, pac->height, MINTERM_COOKIE);
 }
 
-void bobUpdates(Ghost *blue, Ghost *red, Ghost *pink, Ghost *orange, Pacman *pac,
+void bobUpdates(Ghost *blue, Ghost *red, Ghost *pink, Ghost *orange, Pacman *pacman,
 				Position lastPos[][2], int bufferIdx, tBitMap *tiles, tBitMap *screenBuffer,
 				const UBYTE *tilesMask)
 {
@@ -48,7 +48,7 @@ void bobUpdates(Ghost *blue, Ghost *red, Ghost *pink, Ghost *orange, Pacman *pac
 	Sprite *orangeSprite = NULL;
 	orange->getSprite(orange, orange->direction, &orangeSprite);
 	Sprite *pacSprite = NULL;
-	pac->getSprite(pac, pac->direction, 0, &pacSprite);
+	pacman->getSprite(pacman, pacman->direction, &pacSprite);
 
 	// Save the locations we are about to draw to, so we can erase them next time this buffer is active
 	lastPos[BLUE][bufferIdx].x = blue->x;
@@ -63,8 +63,8 @@ void bobUpdates(Ghost *blue, Ghost *red, Ghost *pink, Ghost *orange, Pacman *pac
 	lastPos[ORANGE][bufferIdx].x = orange->x;
 	lastPos[ORANGE][bufferIdx].y = orange->y;
 
-	lastPos[PACMAN][bufferIdx].x = pac->x;
-	lastPos[PACMAN][bufferIdx].y = pac->y;
+	lastPos[PACMAN][bufferIdx].x = pacman->x;
+	lastPos[PACMAN][bufferIdx].y = pacman->y;
 
 	if (orangeSprite)
 		blitCopyMask(
@@ -97,8 +97,8 @@ void bobUpdates(Ghost *blue, Ghost *red, Ghost *pink, Ghost *orange, Pacman *pac
 	if (pacSprite)
 		blitCopyMask(
 			tiles, pacSprite->x, pacSprite->y,
-			screenBuffer, pac->x, pac->y,
-			pac->width, pac->height,
+			screenBuffer, pacman->x, pacman->y,
+			pacman->width, pacman->height,
 			tilesMask);
 }
 
@@ -110,11 +110,6 @@ void displayGameOverText(Sprite *gameOverText, tBitMap *tiles, tBitMap **screenB
 	blitCopyMask(
 		tiles, gameOverText->x, gameOverText->y,
 		screenBuffers[0], GAME_OVER_TEXT_X, GAME_OVER_TEXT_Y,
-		gameOverText->width, gameOverText->height,
-		tilesMask);
-	blitCopyMask(
-		tiles, gameOverText->x, gameOverText->y,
-		screenBuffers[1], GAME_OVER_TEXT_X, GAME_OVER_TEXT_Y,
 		gameOverText->width, gameOverText->height,
 		tilesMask);
 }
@@ -134,4 +129,10 @@ void clearGameOverText(tBitMap *background, tBitMap **screenBuffers, Sprite *gam
 		background, GAME_OVER_TEXT_X, GAME_OVER_TEXT_Y,
 		screenBuffers[1], GAME_OVER_TEXT_X, GAME_OVER_TEXT_Y,
 		gameOverText->width, gameOverText->height, MINTERM_COOKIE);
+}
+
+void bobPulseCheck(Pacman *pacman)
+{
+	if (pacman)
+		pacman->pulseCheck(pacman);
 }

@@ -9,6 +9,8 @@
 #define CLEARED_START_TEXT      2
 #define GAME_OVER_TEXT          3
 #define CLEAR_GAME_OVER_TEXT    4
+#define PACMAN_DEBUG_MODE       5
+#define FREEZE_GHOSTS           6
 // clang-format on
 
 short initializeGameState();

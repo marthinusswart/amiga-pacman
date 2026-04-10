@@ -6,7 +6,7 @@ short initializeGameState()
 {
     for (int i = 0; i < 256; i++)
     {
-        gameState[i] = 0; // Default state for all tiles
+        gameState[i] = OFF; // Default state for all tiles
     }
     return 0; // Success
 }

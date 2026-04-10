@@ -18,4 +18,6 @@ void displayGameOverText(Sprite *gameOverText, tBitMap *tiles, tBitMap **screenB
 
 void clearGameOverText(tBitMap *background, tBitMap **screenBuffers, Sprite *gameOverText);
 
+void bobPulseCheck(Pacman *pac);
+
 #endif // RENDER_ROUTINES_H
