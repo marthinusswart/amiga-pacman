@@ -28,22 +28,22 @@ static Direction getOppositeDirection(Direction dir)
 static void calculateNextDirection(Ghost *g, int targetX, int targetY)
 {
     int best_dist = 0x7FFFFFFF; // Max int
-    Direction next_dir = g->direction;
-    Direction opposite_dir = getOppositeDirection(g->direction);
+    Direction nextDirection = g->direction;
+    Direction oppositeDirection = getOppositeDirection(g->direction);
 
     // Evaluate all 4 possible directions (LEFT, UP, RIGHT, DOWN)
     for (int i = 0; i < 4; i++)
     {
-        Direction check_dir = (Direction)i;
+        Direction checkDirection = (Direction)i;
 
         // 1. Is this direction the opposite of the current one? (Disallowed)
-        if (check_dir == opposite_dir)
+        if (checkDirection == oppositeDirection)
             continue;
 
         int nextX = g->x;
         int nextY = g->y;
 
-        switch (check_dir)
+        switch (checkDirection)
         {
         case LEFT:
             nextX -= 16;
@@ -71,7 +71,7 @@ static void calculateNextDirection(Ghost *g, int targetX, int targetY)
         if (dist_sq < best_dist)
         {
             best_dist = dist_sq;
-            next_dir = check_dir;
+            nextDirection = checkDirection;
         }
     }
 
@@ -79,10 +79,10 @@ static void calculateNextDirection(Ghost *g, int targetX, int targetY)
     // In this case, we allow it to break the "no-reverse" rule to get out.
     if (best_dist == 0x7FFFFFFF)
     {
-        next_dir = opposite_dir;
+        nextDirection = oppositeDirection;
     }
 
-    g->direction = next_dir;
+    g->direction = nextDirection;
 }
 
 void updateChaseGhostDirection(Ghost *g, Pacman *p)

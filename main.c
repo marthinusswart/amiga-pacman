@@ -85,6 +85,7 @@ Sprite *pellet;
 Sprite *startText;
 Sprite *gameOverText;
 Sprite *numericSprites[10]; // Array for numeric sprites
+Sprite *highScoreSprite;
 /* ------------ Text Sprites ---------- */
 
 // backup
@@ -383,7 +384,8 @@ static void updatePellets(Pacman *pacman, UBYTE *pelletsOnMap, tBitMap *tBackgro
 		int tileY = tileRow * 16;
 
 		// Erase the pellet by filling its 16x16 bounding box with color 0 (black)
-		blitRect(tBackground, tileX, tileY, 16, 16, 0);
+		// only blit the area of the pellet, not the entire tile, to preserve maze walls and other details
+		blitRect(tBackground, tileX, tileY + 1, 16, 14, 0);
 	}
 }
 
