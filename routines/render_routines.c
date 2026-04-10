@@ -48,7 +48,7 @@ void bobUpdates(Ghost *blue, Ghost *red, Ghost *pink, Ghost *orange, Pacman *pac
 	Sprite *orangeSprite = NULL;
 	orange->getSprite(orange, orange->direction, &orangeSprite);
 	Sprite *pacSprite = NULL;
-	pac->getSprite(pac, pac->direction, &pacSprite);
+	pac->getSprite(pac, pac->direction, 0, &pacSprite);
 
 	// Save the locations we are about to draw to, so we can erase them next time this buffer is active
 	lastPos[BLUE][bufferIdx].x = blue->x;

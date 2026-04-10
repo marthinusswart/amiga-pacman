@@ -23,16 +23,20 @@ short setupPacman(Pacman **pacman, const UBYTE *spriteTileData)
     (*pacman)->setMap(*pacman, mapping_stage_0001);
     calculateSpriteLocation(3, 9, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
-    (*pacman)->addSprite(*pacman, RIGHT, bobX, bobY, 16, 16, spriteTileData);
+    for (int i = 0; i < 3; i++)
+        (*pacman)->addSprite(*pacman, RIGHT, i, bobX, bobY, 16, 16, spriteTileData);
     calculateSpriteLocation(3, 5, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created DOWN sprite at (%ld, %ld)\n", bobX, bobY);
-    (*pacman)->addSprite(*pacman, DOWN, bobX, bobY, 16, 16, spriteTileData);
+    for (int i = 0; i < 3; i++)
+        (*pacman)->addSprite(*pacman, DOWN, i, bobX, bobY, 16, 16, spriteTileData);
     calculateSpriteLocation(3, 7, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created LEFT sprite at (%ld, %ld)\n", bobX, bobY);
-    (*pacman)->addSprite(*pacman, LEFT, bobX, bobY, 16, 16, spriteTileData);
+    for (int i = 0; i < 3; i++)
+        (*pacman)->addSprite(*pacman, LEFT, i, bobX, bobY, 16, 16, spriteTileData);
     calculateSpriteLocation(3, 11, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created UP sprite at (%ld, %ld)\n", bobX, bobY);
-    (*pacman)->addSprite(*pacman, UP, bobX, bobY, 16, 16, spriteTileData);
+    for (int i = 0; i < 3; i++)
+        (*pacman)->addSprite(*pacman, UP, i, bobX, bobY, 16, 16, spriteTileData);
 
     return 0;
 }

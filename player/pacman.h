@@ -25,15 +25,15 @@ typedef struct Pacman
     int height;
     Direction direction;
     const UBYTE *currentMap;
-    Sprite downSprite;
-    Sprite upSprite;
-    Sprite leftSprite;
-    Sprite rightSprite;
+    Sprite downSprites[3];
+    Sprite upSprites[3];
+    Sprite leftSprites[3];
+    Sprite rightSprites[3];
 
     // Function pointer to emulate a method call
     void (*movePacman)(struct Pacman *p, Direction dir);
-    void (*addSprite)(struct Pacman *p, Direction dir, int spriteX, int spriteY, int width, int height, const UBYTE *spriteTileData);
-    short (*getSprite)(struct Pacman *p, Direction dir, Sprite **sprite_out);
+    void (*addSprite)(struct Pacman *p, Direction dir, int index, int spriteX, int spriteY, int width, int height, const UBYTE *spriteTileData);
+    short (*getSprite)(struct Pacman *p, Direction dir, int index, Sprite **sprite_out);
     void (*setMap)(struct Pacman *p, const UBYTE *map);
     int (*isPacmanColliding)(struct Pacman *p, struct Ghost *redGhost, struct Ghost *blueGhost, struct Ghost *pinkGhost, struct Ghost *orangeGhost);
 } Pacman;

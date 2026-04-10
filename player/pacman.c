@@ -3,8 +3,8 @@
 
 // Private forward declaration
 static void movePacman(Pacman *p, Direction direction);
-static void addSprite(Pacman *p, Direction direction, int spriteX, int spriteY, int width, int height, const UBYTE *spriteTileData);
-static short getSprite(Pacman *p, Direction direction, Sprite **sprite_out);
+static void addSprite(Pacman *p, Direction direction, int index, int spriteX, int spriteY, int width, int height, const UBYTE *spriteTileData);
+static short getSprite(Pacman *p, Direction direction, int index, Sprite **sprite_out);
 static void setMap(Pacman *p, const UBYTE *map);
 static int isPacmanColliding(Pacman *p, Ghost *redGhost, Ghost *blueGhost, Ghost *pinkGhost, Ghost *orangeGhost);
 
@@ -83,22 +83,25 @@ static void movePacman(Pacman *p, Direction direction)
     }
 }
 
-static void addSprite(Pacman *p, Direction direction, int spriteX, int spriteY, int width, int height, const UBYTE *spriteTileData)
+static void addSprite(Pacman *p, Direction direction, int index, int spriteX, int spriteY, int width, int height, const UBYTE *spriteTileData)
 {
+    if (index < 0 || index >= 3)
+        return; // Prevent out of bounds index
+
     Sprite *sprite = NULL;
     switch (direction)
     {
     case LEFT:
-        sprite = &p->leftSprite;
+        sprite = &p->leftSprites[index];
         break;
     case UP:
-        sprite = &p->upSprite;
+        sprite = &p->upSprites[index];
         break;
     case RIGHT:
-        sprite = &p->rightSprite;
+        sprite = &p->rightSprites[index];
         break;
     case DOWN:
-        sprite = &p->downSprite;
+        sprite = &p->downSprites[index];
         break;
     default:
         return; // Invalid direction
@@ -110,24 +113,24 @@ static void addSprite(Pacman *p, Direction direction, int spriteX, int spriteY, 
     sprite->spriteData = spriteTileData; // Example: all sprites use the same data for now
 }
 
-static short getSprite(Pacman *p, Direction direction, Sprite **sprite_out)
+static short getSprite(Pacman *p, Direction direction, int index, Sprite **sprite_out)
 {
-    if (!sprite_out)
+    if (!sprite_out || index < 0 || index >= 3)
         return -1;
 
     switch (direction)
     {
     case LEFT:
-        *sprite_out = &p->leftSprite;
+        *sprite_out = &p->leftSprites[index];
         return 0;
     case UP:
-        *sprite_out = &p->upSprite;
+        *sprite_out = &p->upSprites[index];
         return 0;
     case RIGHT:
-        *sprite_out = &p->rightSprite;
+        *sprite_out = &p->rightSprites[index];
         return 0;
     case DOWN:
-        *sprite_out = &p->downSprite;
+        *sprite_out = &p->downSprites[index];
         return 0;
     default:
         *sprite_out = NULL;
