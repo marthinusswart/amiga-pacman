@@ -11,6 +11,9 @@
 #define CLEAR_GAME_OVER_TEXT    4
 #define PACMAN_DEBUG_MODE       5
 #define FREEZE_GHOSTS           6
+#define SET_GHOST_VULNERABLE    7
+#define GHOST_VULNERABLE        8
+#define SET_GHOST_INVULNERABLE  9
 // clang-format on
 
 short initializeGameState();

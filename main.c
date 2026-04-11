@@ -2,6 +2,7 @@
 #include <ace/managers/key.h>
 #include <ace/utils/bitmap.h>
 #include <ace/managers/blit.h>
+#include <ace/managers/timer.h>
 #include <proto/exec.h>
 #include <proto/dos.h>
 #include <proto/graphics.h>
@@ -22,6 +23,7 @@
 #include "routines/collision_routines.h"
 #include "routines/pathfinding_routines.h"
 #include "routines/sprite_routines.h"
+#include "routines/time_routines.h"
 #include "routines/memory_routines.h" // For pacman_tiles2
 #include "routines/render_routines.h"
 #include "player/pacman.h"
@@ -34,7 +36,7 @@
 #include "constants.h"
 
 // config
-#define MUSIC
+#define MUSIC_OFF
 
 /* forward declarations */
 static void vblankHandler(volatile struct Custom *pCustom, volatile void *pData);
@@ -51,6 +53,9 @@ static void resetGameState(void);
 static void updatePellets(Pacman *pacman,
 						  UBYTE *pelletsOnMap, tBitMap *tBackground,
 						  tBitMap *frontBuffer, tBitMap *backBuffer);
+static void updatePowerPills(Pacman *pacman,
+							 UBYTE *pillsOnMap, tBitMap *tBackground,
+							 tBitMap *frontBuffer, tBitMap *backBuffer);
 static void setupSprites(void);
 static void loadNewStage(int stageNumber);
 static int initializePositionTrackers(Position positions[][2],
@@ -103,8 +108,10 @@ tBitMap *tBackground = NULL;
 // Double buffering history trackers. Array index 0 tracks Buffer 0, index 1 tracks Buffer 1.
 static Position lastPosition[NUM_ENTITIES][2];
 static UBYTE pelletsOnMap[320];
+static UBYTE pillsOnMap[320];
 static int currentScore = 0;
 static int highScore = 0;
+static ULONG vulenrabilityStartTime = 0;
 
 // DEMO - INCBIN
 volatile short frameCounter = 0;
@@ -158,6 +165,8 @@ static void setupEnvironment(void)
 	systemCreate(); // Seize the system BEFORE p61Init pollutes the hardware registers
 	systemUnuse();	// Fully suspend the OS so it stops overwriting the copper list
 
+	timerCreate();
+
 	warpmode(1);
 }
 
@@ -176,6 +185,8 @@ static void teardownEnvironment(void)
 		FreeMem(tBackground, sizeof(tBitMap));
 	if (pacman_stage)
 		freeChipMem(pacman_stage, pacman_stage_size);
+
+	timerDestroy();
 
 	systemDestroy();
 
@@ -325,6 +336,8 @@ static void resetGameState(void)
 
 	currentScore = 0;
 
+	addPowerPillsToMap(powerPill, pillsOnMap, tBackground, tPacmanTiles, tScreenBuffers,
+					   (const UBYTE *)pacman_tiles_mask, currentStageMap);
 	addPelletsToMap(pellet, pelletsOnMap, tBackground, tPacmanTiles, tScreenBuffers,
 					(const UBYTE *)pacman_tiles_mask, currentStageMap);
 
@@ -364,6 +377,36 @@ static void updatePellets(Pacman *pacman, UBYTE *pelletsOnMap, tBitMap *tBackgro
 	}
 }
 
+static void updatePowerPills(Pacman *pacman, UBYTE *pillsOnMap, tBitMap *tBackground, tBitMap *frontBuffer, tBitMap *backBuffer)
+{
+	if (!pacman || !pillsOnMap || !tBackground || !frontBuffer || !backBuffer)
+		return;
+
+	// Calculate the center of Pac-Man to determine which tile he is currently eating
+	int centerX = pacman->x + (pacman->width / 2);
+	int centerY = pacman->y + (pacman->height / 2);
+
+	if (tileHasPowerPill(pillsOnMap, centerX, centerY))
+	{
+		int tileCol = centerX >> 4; // divide by 16
+		int tileRow = centerY >> 4; // divide by 16
+		int tileIndex = tileRow * 20 + tileCol;
+
+		pillsOnMap[tileIndex] = 0;
+		currentScore += 10; // Classic Pac-Man awards 10 points for a Power Pill
+
+		updateGameState(SET_GHOST_VULNERABLE, ON);
+		updateGameState(GHOST_VULNERABLE, ON);
+		updateHighScore();
+
+		int tileX = tileCol * 16;
+		int tileY = tileRow * 16;
+
+		// Erase the power pill by filling its 16x16 bounding box with color 0 (black)
+		blitRect(tBackground, tileX, tileY + 1, 16, 14, 0);
+	}
+}
+
 static void updateHighScore()
 {
 	if (currentScore > highScore)
@@ -396,7 +439,7 @@ static void loadNewStage(int stageNumber)
 	// 	return;
 	// }
 
-	// addPowerPillsToMap(powerPill, tBackground, tPacmanTiles, tScreenBuffers,
+	// addPowerPillsToMap(powerPill, pillsOnMap, tBackground, tPacmanTiles, tScreenBuffers,
 	// 				   (const UBYTE *)pacman_tiles_mask, pacman_stage);
 	// addPelletsToMap(pellet, pelletsOnMap, tBackground, tPacmanTiles, tScreenBuffers,
 	// 				(const UBYTE *)pacman_tiles_mask, pacman_stage);
@@ -531,7 +574,7 @@ int main()
 	/* Just a test, not really needed at this point */
 	loadNewStage(1);
 
-	addPowerPillsToMap(powerPill, tBackground, tPacmanTiles, tScreenBuffers,
+	addPowerPillsToMap(powerPill, pillsOnMap, tBackground, tPacmanTiles, tScreenBuffers,
 					   (const UBYTE *)pacman_tiles_mask, currentStageMap);
 	addPelletsToMap(pellet, pelletsOnMap, tBackground, tPacmanTiles, tScreenBuffers,
 					(const UBYTE *)pacman_tiles_mask, currentStageMap);
@@ -546,6 +589,15 @@ int main()
 		if (getGameState(PLAYING_STATE) == ON)
 		{
 			updatePellets(pacman, pelletsOnMap, tBackground, tScreenBuffers[0], tScreenBuffers[1]);
+			updatePowerPills(pacman, pillsOnMap, tBackground, tScreenBuffers[0], tScreenBuffers[1]);
+
+			if (getGameState(SET_GHOST_VULNERABLE) == ON)
+			{
+				updateGameState(SET_GHOST_VULNERABLE, OFF);
+				updateGhostVulnerability(blueGhost, redGhost, pinkGhost, orangeGhost, TRUE);
+				vulenrabilityStartTime = timerGet();
+				DEBUG_PRINT("Ghosts are now vulnerable!\n");
+			}
 		}
 
 		// 2. Update ghost paths and positions
@@ -600,6 +652,16 @@ int main()
 		{
 			displayGameOverText(gameOverText, tPacmanTiles, tScreenBuffers,
 								(const UBYTE *)pacman_tiles_mask);
+		}
+
+		// 9. check timer-based events like ghost vulnerability duration
+		if (getGameState(GHOST_VULNERABLE) == ON)
+		{
+			if (isGhostVulnerabilityExpired(vulenrabilityStartTime, 5))
+			{
+				updateGameState(GHOST_VULNERABLE, OFF);
+				updateGhostVulnerability(blueGhost, redGhost, pinkGhost, orangeGhost, FALSE);
+			}
 		}
 
 		keyProcess(); // Process pending keystrokes from the CIA interrupt buffer

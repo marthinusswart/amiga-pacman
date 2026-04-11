@@ -2,7 +2,8 @@
 
 // Private forward declaration
 static void moveGhost(Ghost *g, Direction direction);
-static void addSprite(Ghost *g, Direction direction, int spriteX, int spriteY, int width, int height, const UBYTE *spriteTileData);
+static void addSprite(Ghost *g, Direction direction, int spriteX, int spriteY,
+                      int width, int height, const UBYTE *spriteTileData, SpriteType type);
 static short getSprite(Ghost *g, Direction direction, Sprite **sprite_out);
 static void setMap(Ghost *g, const UBYTE *map);
 
@@ -22,6 +23,7 @@ short createGhost(Ghost **g_out, int x, int y, int width, int height)
     g->prevX = x;
     g->prevY = y;
     g->speed = 1; // Default speed, can be modified later
+    g->isVulnerable = FALSE;
     g->direction = RIGHT;
     g->moveGhost = moveGhost;      // Assign the function pointer
     g->addSprite = addSprite;      // Assign the function pointer
@@ -90,31 +92,65 @@ static void moveGhost(Ghost *g, Direction direction)
     }
 }
 
-static void addSprite(Ghost *g, Direction direction, int spriteX, int spriteY, int width, int height, const UBYTE *spriteTileData)
+static void addSprite(Ghost *g, Direction direction, int spriteX, int spriteY,
+                      int width, int height, const UBYTE *spriteTileData, SpriteType type)
 {
-    Sprite *sprite = NULL;
-    switch (direction)
+    if (type == NORMAL)
     {
-    case LEFT:
-        sprite = &g->leftSprite;
-        break;
-    case UP:
-        sprite = &g->upSprite;
-        break;
-    case RIGHT:
-        sprite = &g->rightSprite;
-        break;
-    case DOWN:
-        sprite = &g->downSprite;
-        break;
-    default:
-        return; // Invalid direction
+        Sprite *sprite = NULL;
+        switch (direction)
+        {
+        case LEFT:
+            sprite = &g->leftSprite;
+            break;
+        case UP:
+            sprite = &g->upSprite;
+            break;
+        case RIGHT:
+            sprite = &g->rightSprite;
+            break;
+        case DOWN:
+            sprite = &g->downSprite;
+            break;
+        default:
+            return; // Invalid direction
+        }
+        sprite->x = spriteX;
+        sprite->y = spriteY;
+        sprite->width = width;
+        sprite->height = height;
+        sprite->spriteData = spriteTileData; // Example: all sprites use the same data for now
     }
-    sprite->x = spriteX;
-    sprite->y = spriteY;
-    sprite->width = width;
-    sprite->height = height;
-    sprite->spriteData = spriteTileData; // Example: all sprites use the same data for now
+    else if (type == VULNERABLE)
+    {
+        Sprite *sprite = NULL;
+        switch (direction)
+        {
+        case LEFT:
+            sprite = &g->vulnerableLeftSprite;
+            break;
+        case UP:
+            sprite = &g->vulnerableUpSprite;
+            break;
+        case RIGHT:
+            sprite = &g->vulnerableRightSprite;
+            break;
+        case DOWN:
+            sprite = &g->vulnerableDownSprite;
+            break;
+        default:
+            return; // Invalid direction
+        }
+        sprite->x = spriteX;
+        sprite->y = spriteY;
+        sprite->width = width;
+        sprite->height = height;
+        sprite->spriteData = spriteTileData; // Example: all sprites use the same data for now
+    }
+    else
+    {
+        return; // Invalid type
+    }
 }
 
 static short getSprite(Ghost *g, Direction direction, Sprite **sprite_out)
@@ -122,23 +158,47 @@ static short getSprite(Ghost *g, Direction direction, Sprite **sprite_out)
     if (!sprite_out)
         return -1;
 
-    switch (direction)
+    if (!g->isVulnerable)
     {
-    case LEFT:
-        *sprite_out = &g->leftSprite;
-        return 0;
-    case UP:
-        *sprite_out = &g->upSprite;
-        return 0;
-    case RIGHT:
-        *sprite_out = &g->rightSprite;
-        return 0;
-    case DOWN:
-        *sprite_out = &g->downSprite;
-        return 0;
-    default:
-        *sprite_out = NULL;
-        return -1; // Invalid direction
+        switch (direction)
+        {
+        case LEFT:
+            *sprite_out = &g->leftSprite;
+            return 0;
+        case UP:
+            *sprite_out = &g->upSprite;
+            return 0;
+        case RIGHT:
+            *sprite_out = &g->rightSprite;
+            return 0;
+        case DOWN:
+            *sprite_out = &g->downSprite;
+            return 0;
+        default:
+            *sprite_out = NULL;
+            return -1; // Invalid direction
+        }
+    }
+    else if (g->isVulnerable)
+    {
+        switch (direction)
+        {
+        case LEFT:
+            *sprite_out = &g->vulnerableLeftSprite;
+            return 0;
+        case UP:
+            *sprite_out = &g->vulnerableUpSprite;
+            return 0;
+        case RIGHT:
+            *sprite_out = &g->vulnerableRightSprite;
+            return 0;
+        case DOWN:
+            *sprite_out = &g->vulnerableDownSprite;
+            return 0;
+        default:
+            *sprite_out = NULL;
+            return -1; // Invalid direction
+        }
     }
 }
 

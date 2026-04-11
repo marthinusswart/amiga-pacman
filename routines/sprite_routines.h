@@ -21,7 +21,7 @@ short setupPellets(Sprite **pellet, const UBYTE *spriteTileData);
 short setupSprite(Sprite **sprite, const UBYTE *spriteTileData, int row, int col,
 				  int width, int height, int tilesetWidth, int tilesetHeight);
 
-int addPowerPillsToMap(Sprite *pill, tBitMap *background, tBitMap *pacmanTiles,
+int addPowerPillsToMap(Sprite *pill, UBYTE *pillsOnMap, tBitMap *background, tBitMap *pacmanTiles,
 					   tBitMap **screenBuffers, const UBYTE *tilesMask, const UBYTE *mapData);
 int addPelletsToMap(Sprite *pellet, UBYTE *pelletsOnMap, tBitMap *background, tBitMap *pacmanTiles,
 					tBitMap **screenBuffers, const UBYTE *tilesMask, const UBYTE *mapData);
@@ -30,5 +30,8 @@ void ghostUpdates(Pacman *pacman, Ghost *redGhost, Ghost *blueGhost, Ghost *pink
 
 void updateSpriteMaps(Pacman *pacman, Ghost *blueGhost, Ghost *redGhost, Ghost *pinkGhost,
 					  Ghost *orangeGhost, const UBYTE *mapData);
+
+void updateGhostVulnerability(Ghost *blueGhost, Ghost *redGhost, Ghost *pinkGhost,
+							  Ghost *orangeGhost, BOOL isVulnerable);
 
 #endif // SPRITE_ROUTINES_H
