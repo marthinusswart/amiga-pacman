@@ -569,7 +569,7 @@ int main()
 	updateGameState(PLAYING_STATE, OFF);
 	updateGameState(GAME_OVER_TEXT, OFF);
 	updateGameState(PACMAN_DEBUG_MODE, OFF);
-	updateGameState(FREEZE_GHOSTS, ON);
+	updateGameState(FREEZE_GHOSTS, OFF);
 
 	/* Just a test, not really needed at this point */
 	loadNewStage(1);
