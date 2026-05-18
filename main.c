@@ -241,7 +241,7 @@ static int processInputs(void)
 			pacman->movePacman(pacman, DOWN);
 	}
 
-	else if (currSpaceState && !prevSpaceState)
+	if (((getGameState(PLAYING_STATE) == OFF)) && (currSpaceState && !prevSpaceState))
 	{
 		if (getGameState(GAME_OVER_TEXT) == ON)
 		{
@@ -335,6 +335,12 @@ static void resetGameState(void)
 	}
 
 	currentScore = 0;
+
+	// After resetting the character's x/y coordinates, we must also reset
+	// the position history tracker. Otherwise, the next frame will try to
+	// erase the characters from their positions at the end of the *last* game.
+	if (pacman && blueGhost && redGhost && pinkGhost && orangeGhost)
+		initializePositionTrackers(lastPosition, blueGhost, redGhost, pinkGhost, orangeGhost, pacman);
 
 	addPowerPillsToMap(powerPill, pillsOnMap, tBackground, tPacmanTiles, tScreenBuffers,
 					   (const UBYTE *)pacman_tiles_mask, currentStageMap);
@@ -568,7 +574,7 @@ int main()
 	updateGameState(CLEARED_START_TEXT, OFF);
 	updateGameState(PLAYING_STATE, OFF);
 	updateGameState(GAME_OVER_TEXT, OFF);
-	updateGameState(PACMAN_DEBUG_MODE, OFF);
+	updateGameState(PACMAN_DEBUG_MODE, ON);
 	updateGameState(FREEZE_GHOSTS, OFF);
 
 	/* Just a test, not really needed at this point */
@@ -613,8 +619,17 @@ int main()
 		// ==========================================
 		// CLEAR PHASE: Restore backgrounds for ALL objects
 		// ==========================================
-		backgroundUpdates(tBackground, lastPosition, backBufferIdx, tScreenBuffers[backBufferIdx],
-						  orangeGhost, blueGhost, redGhost, pinkGhost, pacman);
+		if (getGameState(PACMAN_DEBUG_MODE) == ON)
+		{
+			backgroundUpdatesDebug(tBackground, lastPosition, backBufferIdx, tScreenBuffers[backBufferIdx],
+								   orangeGhost, blueGhost, redGhost, pinkGhost, pacman,
+								   numericSprites, tAlphanumericTiles, (const UBYTE *)alphanumeric_tiles_mask);
+		}
+		else
+		{
+			backgroundUpdates(tBackground, lastPosition, backBufferIdx, tScreenBuffers[backBufferIdx],
+							  orangeGhost, blueGhost, redGhost, pinkGhost, pacman);
+		}
 
 		// 5. Draw ALL objects in their new positions
 		// ==========================================
@@ -625,24 +640,27 @@ int main()
 				   (const UBYTE *)pacman_tiles_mask);
 
 		// 5a. Update Score
-		displayNumbers(currentScore, CURRENT_SCORE_X, CURRENT_SCORE_Y, tAlphanumericTiles,
-					   tScreenBuffers[backBufferIdx],
-					   (const UBYTE *)alphanumeric_tiles_mask, numericSprites, 4);
+		// displayNumbers(currentScore, CURRENT_SCORE_X, CURRENT_SCORE_Y, tAlphanumericTiles,
+		// 			   tScreenBuffers[backBufferIdx],
+		// 			   (const UBYTE *)alphanumeric_tiles_mask, numericSprites, 4);
 
 		// 5b. Update High Score
-		displayNumbers(highScore, HIGH_SCORE_X, HIGH_SCORE_Y, tAlphanumericTiles,
-					   tScreenBuffers[backBufferIdx],
-					   (const UBYTE *)alphanumeric_tiles_mask, numericSprites, 4);
+		// displayNumbers(highScore, HIGH_SCORE_X, HIGH_SCORE_Y, tAlphanumericTiles,
+		// 			   tScreenBuffers[backBufferIdx],
+		// 			   (const UBYTE *)alphanumeric_tiles_mask, numericSprites, 4);
 
 		// ==========================================
 		// SWAP PHASE: Wait for VBlank, then swap buffers
 		// ==========================================
+		WaitBlt();
 		WaitVbl();
+
 		doubleBufferUpdates(tScreenBuffers, &frontBufferIdx, &backBufferIdx, bplPtrsInCopper);
 		bobPulseCheck(pacman);
 
 		// 7. Check for collisions between Pacman and the ghosts
-		if (pacman->isPacmanColliding(pacman, redGhost, blueGhost, pinkGhost, orangeGhost))
+		if ((getGameState(PACMAN_DEBUG_MODE) == OFF) &&
+			(pacman->isPacmanColliding(pacman, redGhost, blueGhost, pinkGhost, orangeGhost)))
 		{
 			setGameOverState();
 		}
@@ -654,8 +672,7 @@ int main()
 								(const UBYTE *)pacman_tiles_mask);
 		}
 
-		// 9. check timer-based events like ghost vulnerability duration
-		if (getGameState(GHOST_VULNERABLE) == ON)
+		// 9. check timer - based events like ghost vulnerability duration if (getGameState(GHOST_VULNERABLE) == ON)
 		{
 			if (isGhostVulnerabilityExpired(vulenrabilityStartTime, 5))
 			{

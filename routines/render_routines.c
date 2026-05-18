@@ -1,6 +1,16 @@
 #include "render_routines.h"
 #include <ace/managers/blit.h>
 
+void backgroundUpdatesDebug(tBitMap *background, Position lastPos[][2], int bufferIdx, tBitMap *screenBuffer,
+							Ghost *orange, Ghost *blue, Ghost *red, Ghost *pink, Pacman *pac,
+							Sprite *numericSprites[10], tBitMap *alphaTiles, const UBYTE *alphaTilesMask)
+{
+	// Write the buffer number to the screen to help debug double buffering
+	debugDrawBufferNumber(bufferIdx, screenBuffer, background, numericSprites, alphaTiles, alphaTilesMask);
+
+	backgroundUpdates(background, lastPos, bufferIdx, screenBuffer, orange, blue, red, pink, pac);
+}
+
 void backgroundUpdates(tBitMap *background, Position lastPos[][2], int bufferIdx, tBitMap *screenBuffer,
 					   Ghost *orange, Ghost *blue, Ghost *red, Ghost *pink, Pacman *pac)
 {
@@ -135,4 +145,26 @@ void bobPulseCheck(Pacman *pacman)
 {
 	if (pacman)
 		pacman->pulseCheck(pacman);
+}
+
+void debugDrawBufferNumber(int bufferIdx, tBitMap *screenBuffer, tBitMap *background,
+						   Sprite *numericSprites[10], tBitMap *alphaTiles, const UBYTE *alphaTilesMask)
+{
+	// Clear a 16x16 area at x=16, y=0 to accommodate the requested 16 pixel height
+	blitCopy(background, 16, 0, screenBuffer, 16, 0, 16, 16, MINTERM_COOKIE);
+
+	// Draw the buffer index number.
+	// We render the digit directly since displayNumbers defaults to a 4-digit format.
+	if (bufferIdx >= 0 && bufferIdx <= 9)
+	{
+		Sprite *digitSprite = numericSprites[bufferIdx];
+		if (digitSprite)
+		{
+			blitCopyMask(
+				alphaTiles, digitSprite->x, digitSprite->y,
+				screenBuffer, 16, 0,
+				digitSprite->width, digitSprite->height, // Note: natively 8x8 pixels
+				alphaTilesMask);
+		}
+	}
 }
