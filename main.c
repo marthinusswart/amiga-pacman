@@ -36,7 +36,7 @@
 #include "constants.h"
 
 // config
-#define MUSIC_OFF
+#define MUSIC
 
 /* forward declarations */
 static void vblankHandler(volatile struct Custom *pCustom, volatile void *pData);
@@ -574,7 +574,7 @@ int main()
 	updateGameState(CLEARED_START_TEXT, OFF);
 	updateGameState(PLAYING_STATE, OFF);
 	updateGameState(GAME_OVER_TEXT, OFF);
-	updateGameState(PACMAN_DEBUG_MODE, ON);
+	updateGameState(PACMAN_DEBUG_MODE, OFF);
 	updateGameState(FREEZE_GHOSTS, OFF);
 
 	/* Just a test, not really needed at this point */
@@ -640,14 +640,14 @@ int main()
 				   (const UBYTE *)pacman_tiles_mask);
 
 		// 5a. Update Score
-		// displayNumbers(currentScore, CURRENT_SCORE_X, CURRENT_SCORE_Y, tAlphanumericTiles,
-		// 			   tScreenBuffers[backBufferIdx],
-		// 			   (const UBYTE *)alphanumeric_tiles_mask, numericSprites, 4);
+		displayNumbers(currentScore, CURRENT_SCORE_X, CURRENT_SCORE_Y, tAlphanumericTiles,
+					   tScreenBuffers[backBufferIdx],
+					   (const UBYTE *)alphanumeric_tiles_mask, numericSprites, 4);
 
 		// 5b. Update High Score
-		// displayNumbers(highScore, HIGH_SCORE_X, HIGH_SCORE_Y, tAlphanumericTiles,
-		// 			   tScreenBuffers[backBufferIdx],
-		// 			   (const UBYTE *)alphanumeric_tiles_mask, numericSprites, 4);
+		displayNumbers(highScore, HIGH_SCORE_X, HIGH_SCORE_Y, tAlphanumericTiles,
+					   tScreenBuffers[backBufferIdx],
+					   (const UBYTE *)alphanumeric_tiles_mask, numericSprites, 4);
 
 		// ==========================================
 		// SWAP PHASE: Wait for VBlank, then swap buffers
