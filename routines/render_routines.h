@@ -6,8 +6,15 @@
 #include "../player/pacman.h"
 #include "../constants.h"
 
+void debugDrawBufferNumber(int bufferIdx, tBitMap *screenBuffer, tBitMap *background,
+						   Sprite *numericSprites[10], tBitMap *alphaTiles, const UBYTE *alphaTilesMask);
+
 void backgroundUpdates(tBitMap *background, Position lastPos[][2], int bufferIdx, tBitMap *screenBuffer,
 					   Ghost *orange, Ghost *blue, Ghost *red, Ghost *pink, Pacman *pac);
+
+void backgroundUpdatesDebug(tBitMap *background, Position lastPos[][2], int bufferIdx, tBitMap *screenBuffer,
+							Ghost *orange, Ghost *blue, Ghost *red, Ghost *pink, Pacman *pac,
+							Sprite *numericSprites[10], tBitMap *alphaTiles, const UBYTE *alphaTilesMask);
 
 void bobUpdates(Ghost *blue, Ghost *red, Ghost *pink, Ghost *orange, Pacman *pac,
 				Position lastPos[][2], int bufferIdx, tBitMap *tiles, tBitMap *screenBuffer,

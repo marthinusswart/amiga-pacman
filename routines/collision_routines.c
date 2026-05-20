@@ -109,3 +109,9 @@ int tileHasPellet(const UBYTE *pelletsOnMap, int x, int y)
     UBYTE tileValue = GET_TILE(pelletsOnMap, x, y);
     return (tileValue == 1);
 }
+
+int tileHasPowerPill(const UBYTE *pillsOnMap, int x, int y)
+{
+    UBYTE tileValue = GET_TILE(pillsOnMap, x, y);
+    return (tileValue == 1);
+}

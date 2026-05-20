@@ -10,6 +10,11 @@
 #include "routines/memory_routines.h"
 #include "sprite/sprite_ext.h"
 
+typedef enum SpriteType
+{
+    NORMAL,
+    VULNERABLE
+} SpriteType;
 typedef struct Ghost
 {
     int x;
@@ -20,16 +25,25 @@ typedef struct Ghost
     int height;
     int speed;
     BOOL movedPreviousFrame;
+    BOOL isVulnerable;
+
     Direction direction;
     const UBYTE *currentMap;
+
     Sprite downSprite;
     Sprite upSprite;
     Sprite leftSprite;
     Sprite rightSprite;
 
+    Sprite vulnerableDownSprite;
+    Sprite vulnerableUpSprite;
+    Sprite vulnerableLeftSprite;
+    Sprite vulnerableRightSprite;
+
     // Function pointer to emulate a method call
     void (*moveGhost)(struct Ghost *g, Direction dir);
-    void (*addSprite)(struct Ghost *g, Direction dir, int spriteX, int spriteY, int width, int height, const UBYTE *spriteTileData);
+    void (*addSprite)(struct Ghost *g, Direction dir, int spriteX, int spriteY,
+                      int width, int height, const UBYTE *spriteTileData, SpriteType type);
     short (*getSprite)(struct Ghost *g, Direction dir, Sprite **sprite_out);
     void (*setMap)(struct Ghost *g, const UBYTE *map);
 } Ghost;

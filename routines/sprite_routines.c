@@ -23,73 +23,73 @@ short setupPacman(Pacman **pacman, const UBYTE *spriteTileData)
     (*pacman)->setMap(*pacman, mapping_stage_0001);
 
     /* Setup sprite frame 0 for each direction */
-    calculateSpriteLocation(3, 9, 16, 16, 320, 320, &bobX, &bobY);
+    calculateSpriteLocation(3, 13, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
     (*pacman)->addSprite(*pacman, RIGHT, 0, bobX, bobY, 16, 16, spriteTileData);
 
-    calculateSpriteLocation(3, 5, 16, 16, 320, 320, &bobX, &bobY);
+    calculateSpriteLocation(6, 13, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created DOWN sprite at (%ld, %ld)\n", bobX, bobY);
     (*pacman)->addSprite(*pacman, DOWN, 0, bobX, bobY, 16, 16, spriteTileData);
 
-    calculateSpriteLocation(3, 7, 16, 16, 320, 320, &bobX, &bobY);
+    calculateSpriteLocation(4, 17, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created LEFT sprite at (%ld, %ld)\n", bobX, bobY);
     (*pacman)->addSprite(*pacman, LEFT, 0, bobX, bobY, 16, 16, spriteTileData);
 
-    calculateSpriteLocation(3, 11, 16, 16, 320, 320, &bobX, &bobY);
+    calculateSpriteLocation(5, 17, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created UP sprite at (%ld, %ld)\n", bobX, bobY);
     (*pacman)->addSprite(*pacman, UP, 0, bobX, bobY, 16, 16, spriteTileData);
     /* */
 
     /* Setup sprite frame 1 (mouth closing) for each direction */
-    calculateSpriteLocation(2, 9, 16, 16, 320, 320, &bobX, &bobY);
+    calculateSpriteLocation(3, 15, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
     (*pacman)->addSprite(*pacman, RIGHT, 1, bobX, bobY, 16, 16, spriteTileData);
 
-    calculateSpriteLocation(2, 5, 16, 16, 320, 320, &bobX, &bobY);
+    calculateSpriteLocation(6, 15, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created DOWN sprite at (%ld, %ld)\n", bobX, bobY);
     (*pacman)->addSprite(*pacman, DOWN, 1, bobX, bobY, 16, 16, spriteTileData);
 
-    calculateSpriteLocation(2, 7, 16, 16, 320, 320, &bobX, &bobY);
+    calculateSpriteLocation(4, 15, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created LEFT sprite at (%ld, %ld)\n", bobX, bobY);
     (*pacman)->addSprite(*pacman, LEFT, 1, bobX, bobY, 16, 16, spriteTileData);
 
-    calculateSpriteLocation(2, 11, 16, 16, 320, 320, &bobX, &bobY);
+    calculateSpriteLocation(5, 15, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created UP sprite at (%ld, %ld)\n", bobX, bobY);
     (*pacman)->addSprite(*pacman, UP, 1, bobX, bobY, 16, 16, spriteTileData);
     /* */
 
     /* Setup sprite frame 2 (mouth closed) for each direction */
-    calculateSpriteLocation(3, 3, 16, 16, 320, 320, &bobX, &bobY);
+    calculateSpriteLocation(3, 17, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
     (*pacman)->addSprite(*pacman, RIGHT, 2, bobX, bobY, 16, 16, spriteTileData);
 
-    calculateSpriteLocation(3, 3, 16, 16, 320, 320, &bobX, &bobY);
+    calculateSpriteLocation(6, 17, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created DOWN sprite at (%ld, %ld)\n", bobX, bobY);
     (*pacman)->addSprite(*pacman, DOWN, 2, bobX, bobY, 16, 16, spriteTileData);
 
-    calculateSpriteLocation(3, 3, 16, 16, 320, 320, &bobX, &bobY);
+    calculateSpriteLocation(4, 13, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created LEFT sprite at (%ld, %ld)\n", bobX, bobY);
     (*pacman)->addSprite(*pacman, LEFT, 2, bobX, bobY, 16, 16, spriteTileData);
 
-    calculateSpriteLocation(3, 3, 16, 16, 320, 320, &bobX, &bobY);
+    calculateSpriteLocation(5, 13, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created UP sprite at (%ld, %ld)\n", bobX, bobY);
     (*pacman)->addSprite(*pacman, UP, 2, bobX, bobY, 16, 16, spriteTileData);
     /* */
 
     /* Setup sprite frame 3 (mouth opening) for each direction */
-    calculateSpriteLocation(2, 9, 16, 16, 320, 320, &bobX, &bobY);
+    calculateSpriteLocation(3, 15, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
     (*pacman)->addSprite(*pacman, RIGHT, 3, bobX, bobY, 16, 16, spriteTileData);
 
-    calculateSpriteLocation(2, 5, 16, 16, 320, 320, &bobX, &bobY);
+    calculateSpriteLocation(6, 15, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created DOWN sprite at (%ld, %ld)\n", bobX, bobY);
     (*pacman)->addSprite(*pacman, DOWN, 3, bobX, bobY, 16, 16, spriteTileData);
 
-    calculateSpriteLocation(2, 7, 16, 16, 320, 320, &bobX, &bobY);
+    calculateSpriteLocation(4, 15, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created LEFT sprite at (%ld, %ld)\n", bobX, bobY);
     (*pacman)->addSprite(*pacman, LEFT, 3, bobX, bobY, 16, 16, spriteTileData);
 
-    calculateSpriteLocation(2, 11, 16, 16, 320, 320, &bobX, &bobY);
+    calculateSpriteLocation(5, 15, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created UP sprite at (%ld, %ld)\n", bobX, bobY);
     (*pacman)->addSprite(*pacman, UP, 3, bobX, bobY, 16, 16, spriteTileData);
     /* */
@@ -110,16 +110,29 @@ short setupBlueGhost(Ghost **blueGhost, const UBYTE *spriteTileData)
     (*blueGhost)->setMap(*blueGhost, mapping_stage_0001);
     calculateSpriteLocation(4, 1, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
-    (*blueGhost)->addSprite(*blueGhost, RIGHT, bobX, bobY, 16, 16, spriteTileData);
+    (*blueGhost)->addSprite(*blueGhost, RIGHT, bobX, bobY, 16, 16, spriteTileData, NORMAL);
     calculateSpriteLocation(6, 1, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created DOWN sprite at (%ld, %ld)\n", bobX, bobY);
-    (*blueGhost)->addSprite(*blueGhost, DOWN, bobX, bobY, 16, 16, spriteTileData);
+    (*blueGhost)->addSprite(*blueGhost, DOWN, bobX, bobY, 16, 16, spriteTileData, NORMAL);
     calculateSpriteLocation(5, 1, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created LEFT sprite at (%ld, %ld)\n", bobX, bobY);
-    (*blueGhost)->addSprite(*blueGhost, LEFT, bobX, bobY, 16, 16, spriteTileData);
+    (*blueGhost)->addSprite(*blueGhost, LEFT, bobX, bobY, 16, 16, spriteTileData, NORMAL);
     calculateSpriteLocation(7, 1, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created UP sprite at (%ld, %ld)\n", bobX, bobY);
-    (*blueGhost)->addSprite(*blueGhost, UP, bobX, bobY, 16, 16, spriteTileData);
+    (*blueGhost)->addSprite(*blueGhost, UP, bobX, bobY, 16, 16, spriteTileData, NORMAL);
+
+    calculateSpriteLocation(4, 9, 16, 16, 320, 320, &bobX, &bobY);
+    SPRITE_PRINTF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
+    (*blueGhost)->addSprite(*blueGhost, RIGHT, bobX, bobY, 16, 16, spriteTileData, VULNERABLE);
+    calculateSpriteLocation(6, 9, 16, 16, 320, 320, &bobX, &bobY);
+    SPRITE_PRINTF("Created DOWN sprite at (%ld, %ld)\n", bobX, bobY);
+    (*blueGhost)->addSprite(*blueGhost, DOWN, bobX, bobY, 16, 16, spriteTileData, VULNERABLE);
+    calculateSpriteLocation(5, 9, 16, 16, 320, 320, &bobX, &bobY);
+    SPRITE_PRINTF("Created LEFT sprite at (%ld, %ld)\n", bobX, bobY);
+    (*blueGhost)->addSprite(*blueGhost, LEFT, bobX, bobY, 16, 16, spriteTileData, VULNERABLE);
+    calculateSpriteLocation(7, 9, 16, 16, 320, 320, &bobX, &bobY);
+    SPRITE_PRINTF("Created UP sprite at (%ld, %ld)\n", bobX, bobY);
+    (*blueGhost)->addSprite(*blueGhost, UP, bobX, bobY, 16, 16, spriteTileData, VULNERABLE);
 
     return 0;
 }
@@ -137,16 +150,29 @@ short setupRedGhost(Ghost **redGhost, const UBYTE *spriteTileData)
     (*redGhost)->setMap(*redGhost, mapping_stage_0001);
     calculateSpriteLocation(4, 7, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
-    (*redGhost)->addSprite(*redGhost, RIGHT, bobX, bobY, 16, 16, spriteTileData);
+    (*redGhost)->addSprite(*redGhost, RIGHT, bobX, bobY, 16, 16, spriteTileData, NORMAL);
     calculateSpriteLocation(6, 7, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created DOWN sprite at (%ld, %ld)\n", bobX, bobY);
-    (*redGhost)->addSprite(*redGhost, DOWN, bobX, bobY, 16, 16, spriteTileData);
+    (*redGhost)->addSprite(*redGhost, DOWN, bobX, bobY, 16, 16, spriteTileData, NORMAL);
     calculateSpriteLocation(5, 7, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created LEFT sprite at (%ld, %ld)\n", bobX, bobY);
-    (*redGhost)->addSprite(*redGhost, LEFT, bobX, bobY, 16, 16, spriteTileData);
+    (*redGhost)->addSprite(*redGhost, LEFT, bobX, bobY, 16, 16, spriteTileData, NORMAL);
     calculateSpriteLocation(7, 7, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created UP sprite at (%ld, %ld)\n", bobX, bobY);
-    (*redGhost)->addSprite(*redGhost, UP, bobX, bobY, 16, 16, spriteTileData);
+    (*redGhost)->addSprite(*redGhost, UP, bobX, bobY, 16, 16, spriteTileData, NORMAL);
+
+    calculateSpriteLocation(4, 9, 16, 16, 320, 320, &bobX, &bobY);
+    SPRITE_PRINTF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
+    (*redGhost)->addSprite(*redGhost, RIGHT, bobX, bobY, 16, 16, spriteTileData, VULNERABLE);
+    calculateSpriteLocation(6, 9, 16, 16, 320, 320, &bobX, &bobY);
+    SPRITE_PRINTF("Created DOWN sprite at (%ld, %ld)\n", bobX, bobY);
+    (*redGhost)->addSprite(*redGhost, DOWN, bobX, bobY, 16, 16, spriteTileData, VULNERABLE);
+    calculateSpriteLocation(5, 9, 16, 16, 320, 320, &bobX, &bobY);
+    SPRITE_PRINTF("Created LEFT sprite at (%ld, %ld)\n", bobX, bobY);
+    (*redGhost)->addSprite(*redGhost, LEFT, bobX, bobY, 16, 16, spriteTileData, VULNERABLE);
+    calculateSpriteLocation(7, 9, 16, 16, 320, 320, &bobX, &bobY);
+    SPRITE_PRINTF("Created UP sprite at (%ld, %ld)\n", bobX, bobY);
+    (*redGhost)->addSprite(*redGhost, UP, bobX, bobY, 16, 16, spriteTileData, VULNERABLE);
 
     return 0;
 }
@@ -164,16 +190,29 @@ short setupPinkGhost(Ghost **pinkGhost, const UBYTE *spriteTileData)
     (*pinkGhost)->setMap(*pinkGhost, mapping_stage_0001);
     calculateSpriteLocation(4, 5, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
-    (*pinkGhost)->addSprite(*pinkGhost, RIGHT, bobX, bobY, 16, 16, spriteTileData);
+    (*pinkGhost)->addSprite(*pinkGhost, RIGHT, bobX, bobY, 16, 16, spriteTileData, NORMAL);
     calculateSpriteLocation(6, 5, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created DOWN sprite at (%ld, %ld)\n", bobX, bobY);
-    (*pinkGhost)->addSprite(*pinkGhost, DOWN, bobX, bobY, 16, 16, spriteTileData);
+    (*pinkGhost)->addSprite(*pinkGhost, DOWN, bobX, bobY, 16, 16, spriteTileData, NORMAL);
     calculateSpriteLocation(5, 5, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created LEFT sprite at (%ld, %ld)\n", bobX, bobY);
-    (*pinkGhost)->addSprite(*pinkGhost, LEFT, bobX, bobY, 16, 16, spriteTileData);
+    (*pinkGhost)->addSprite(*pinkGhost, LEFT, bobX, bobY, 16, 16, spriteTileData, NORMAL);
     calculateSpriteLocation(7, 5, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created UP sprite at (%ld, %ld)\n", bobX, bobY);
-    (*pinkGhost)->addSprite(*pinkGhost, UP, bobX, bobY, 16, 16, spriteTileData);
+    (*pinkGhost)->addSprite(*pinkGhost, UP, bobX, bobY, 16, 16, spriteTileData, NORMAL);
+
+    calculateSpriteLocation(4, 9, 16, 16, 320, 320, &bobX, &bobY);
+    SPRITE_PRINTF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
+    (*pinkGhost)->addSprite(*pinkGhost, RIGHT, bobX, bobY, 16, 16, spriteTileData, VULNERABLE);
+    calculateSpriteLocation(6, 9, 16, 16, 320, 320, &bobX, &bobY);
+    SPRITE_PRINTF("Created DOWN sprite at (%ld, %ld)\n", bobX, bobY);
+    (*pinkGhost)->addSprite(*pinkGhost, DOWN, bobX, bobY, 16, 16, spriteTileData, VULNERABLE);
+    calculateSpriteLocation(5, 9, 16, 16, 320, 320, &bobX, &bobY);
+    SPRITE_PRINTF("Created LEFT sprite at (%ld, %ld)\n", bobX, bobY);
+    (*pinkGhost)->addSprite(*pinkGhost, LEFT, bobX, bobY, 16, 16, spriteTileData, VULNERABLE);
+    calculateSpriteLocation(7, 9, 16, 16, 320, 320, &bobX, &bobY);
+    SPRITE_PRINTF("Created UP sprite at (%ld, %ld)\n", bobX, bobY);
+    (*pinkGhost)->addSprite(*pinkGhost, UP, bobX, bobY, 16, 16, spriteTileData, VULNERABLE);
 
     return 0;
 }
@@ -191,16 +230,29 @@ short setupOrangeGhost(Ghost **orangeGhost, const UBYTE *spriteTileData)
     (*orangeGhost)->setMap(*orangeGhost, mapping_stage_0001);
     calculateSpriteLocation(4, 3, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
-    (*orangeGhost)->addSprite(*orangeGhost, RIGHT, bobX, bobY, 16, 16, spriteTileData);
+    (*orangeGhost)->addSprite(*orangeGhost, RIGHT, bobX, bobY, 16, 16, spriteTileData, NORMAL);
     calculateSpriteLocation(6, 3, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created DOWN sprite at (%ld, %ld)\n", bobX, bobY);
-    (*orangeGhost)->addSprite(*orangeGhost, DOWN, bobX, bobY, 16, 16, spriteTileData);
+    (*orangeGhost)->addSprite(*orangeGhost, DOWN, bobX, bobY, 16, 16, spriteTileData, NORMAL);
     calculateSpriteLocation(5, 3, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created LEFT sprite at (%ld, %ld)\n", bobX, bobY);
-    (*orangeGhost)->addSprite(*orangeGhost, LEFT, bobX, bobY, 16, 16, spriteTileData);
+    (*orangeGhost)->addSprite(*orangeGhost, LEFT, bobX, bobY, 16, 16, spriteTileData, NORMAL);
     calculateSpriteLocation(7, 3, 16, 16, 320, 320, &bobX, &bobY);
     SPRITE_PRINTF("Created UP sprite at (%ld, %ld)\n", bobX, bobY);
-    (*orangeGhost)->addSprite(*orangeGhost, UP, bobX, bobY, 16, 16, spriteTileData);
+    (*orangeGhost)->addSprite(*orangeGhost, UP, bobX, bobY, 16, 16, spriteTileData, NORMAL);
+
+    calculateSpriteLocation(4, 9, 16, 16, 320, 320, &bobX, &bobY);
+    SPRITE_PRINTF("Created RIGHT sprite at (%ld, %ld)\n", bobX, bobY);
+    (*orangeGhost)->addSprite(*orangeGhost, RIGHT, bobX, bobY, 16, 16, spriteTileData, VULNERABLE);
+    calculateSpriteLocation(6, 9, 16, 16, 320, 320, &bobX, &bobY);
+    SPRITE_PRINTF("Created DOWN sprite at (%ld, %ld)\n", bobX, bobY);
+    (*orangeGhost)->addSprite(*orangeGhost, DOWN, bobX, bobY, 16, 16, spriteTileData, VULNERABLE);
+    calculateSpriteLocation(5, 9, 16, 16, 320, 320, &bobX, &bobY);
+    SPRITE_PRINTF("Created LEFT sprite at (%ld, %ld)\n", bobX, bobY);
+    (*orangeGhost)->addSprite(*orangeGhost, LEFT, bobX, bobY, 16, 16, spriteTileData, VULNERABLE);
+    calculateSpriteLocation(7, 9, 16, 16, 320, 320, &bobX, &bobY);
+    SPRITE_PRINTF("Created UP sprite at (%ld, %ld)\n", bobX, bobY);
+    (*orangeGhost)->addSprite(*orangeGhost, UP, bobX, bobY, 16, 16, spriteTileData, VULNERABLE);
 
     return 0;
 }
@@ -344,19 +396,34 @@ void updateSpriteMaps(Pacman *pacman, Ghost *blueGhost, Ghost *redGhost, Ghost *
         orangeGhost->setMap(orangeGhost, mapData);
 }
 
-int addPowerPillsToMap(Sprite *pill, tBitMap *background, tBitMap *pacmanTiles,
+void updateGhostVulnerability(Ghost *blueGhost, Ghost *redGhost, Ghost *pinkGhost,
+                              Ghost *orangeGhost, BOOL isVulnerable)
+{
+    if (blueGhost)
+        blueGhost->isVulnerable = isVulnerable;
+    if (redGhost)
+        redGhost->isVulnerable = isVulnerable;
+    if (pinkGhost)
+        pinkGhost->isVulnerable = isVulnerable;
+    if (orangeGhost)
+        orangeGhost->isVulnerable = isVulnerable;
+}
+
+int addPowerPillsToMap(Sprite *pill, UBYTE *pillsOnMap, tBitMap *background, tBitMap *pacmanTiles,
                        tBitMap **screenBuffers, const UBYTE *tilesMask, const UBYTE *mapData)
 {
-    if (!pill || !background || !pacmanTiles || !screenBuffers || !tilesMask || !mapData)
+    if (!pill || !pillsOnMap || !background || !pacmanTiles || !screenBuffers || !tilesMask || !mapData)
         return -1;
+
+    int tileX = 0;
+    int tileY = 0;
 
     for (int i = 0; i < 320; i++)
     {
+        pillsOnMap[i] = 0;
         if (mapData[i] == 2) // 2 = Power Pill
         {
-            int tileX = (i % 20) * 16;
-            int tileY = (i / 20) * 16;
-
+            pillsOnMap[i] = 1;
             // Add to the permanent background
             blitCopyMask(
                 pacmanTiles, pill->x, pill->y,
@@ -376,6 +443,13 @@ int addPowerPillsToMap(Sprite *pill, tBitMap *background, tBitMap *pacmanTiles,
                 pill->width, pill->height,
                 tilesMask);
         }
+
+        tileX += 16;
+        if (tileX == 320) // 20 tiles * 16 pixels
+        {
+            tileX = 0;
+            tileY += 16;
+        }
     }
 
     return 0;
@@ -387,15 +461,15 @@ int addPelletsToMap(Sprite *pellet, UBYTE *pelletsOnMap, tBitMap *background, tB
     if (!pellet || !pelletsOnMap || !background || !pacmanTiles || !screenBuffers || !tilesMask || !mapData)
         return -1;
 
+    int tileX = 0;
+    int tileY = 0;
+
     for (int i = 0; i < 320; i++)
     {
         pelletsOnMap[i] = 0; // Clear pellet state
         if (mapData[i] == 0) // 0 = Path (Pellet)
         {
             pelletsOnMap[i] = 1; // Mark pellet as present on the map
-            int tileX = (i % 20) * 16;
-            int tileY = (i / 20) * 16;
-
             // Add to the permanent background
             blitCopyMask(
                 pacmanTiles, pellet->x, pellet->y,
@@ -414,6 +488,13 @@ int addPelletsToMap(Sprite *pellet, UBYTE *pelletsOnMap, tBitMap *background, tB
                 screenBuffers[1], tileX, tileY,
                 pellet->width, pellet->height,
                 tilesMask);
+        }
+
+        tileX += 16;
+        if (tileX == 320)
+        {
+            tileX = 0;
+            tileY += 16;
         }
     }
 
